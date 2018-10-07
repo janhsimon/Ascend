@@ -5,15 +5,18 @@
 
 class Game
 {
+private:
+	SDL_Window *window;
+
 public:
 	Game()
 	{
 		if (SDL_Init(SDL_INIT_VIDEO) != 0)
 		{
-			throw std::runtime_error("Failed to initialize SDL video subsystem, encountered error: " + std::string(SDL_GetError()));
+			throw std::runtime_error("Failed to initialize video subsystem, encountered error: " + std::string(SDL_GetError()));
 		}
 
-		auto window = SDL_CreateWindow("Ascend Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN);
+		window = SDL_CreateWindow("Ascend Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN);
 		if (!window)
 		{
 			throw std::runtime_error("Failed to create window, encountered error: " + std::string(SDL_GetError()));
@@ -31,9 +34,22 @@ public:
 			throw std::runtime_error("Failed to get instance extensions: " + std::string(SDL_GetError()));
 		}
 
-		auto instanceCreateInfo = asc::InstanceCreateInfo().setApplicationName("Ascend Test").setVersion(1, 0, 0);
-		instanceCreateInfo.setInstanceExtensionCount(static_cast<uint32_t>(instanceExtensions.size())).setInstanceExtensions(instanceExtensions.data());
-		asc::createInstance(instanceCreateInfo);
+		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0);
+		appInfo.setInstanceExtensionCount(static_cast<uint32_t>(instanceExtensions.size())).setInstanceExtensions(instanceExtensions.data());
+
+		auto createSurface = [=](VkInstance instance) -> VkSurfaceKHR
+		{
+			VkSurfaceKHR surface;
+
+			if (!SDL_Vulkan_CreateSurface(window, instance, &surface))
+			{
+				throw std::runtime_error("Failed to create window surface.");
+			}
+
+			return surface;
+		};
+
+		auto context = asc::Context(appInfo, createSurface);
 
 		SDL_Event event;
 		auto done = false;

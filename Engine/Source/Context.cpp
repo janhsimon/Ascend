@@ -1,4 +1,4 @@
-#include "Ascend.hpp"
+#include "Context.hpp"
 
 #include <vulkan/vulkan.hpp>
 
@@ -8,7 +8,7 @@ const uint32_t ENGINE_VERSION = VK_MAKE_VERSION(1, 0, 0);
 
 namespace asc
 {
-	void createInstance(const InstanceCreateInfo &info)
+	vk::Instance *Context::createInstance(const ApplicationInfo &appInfo)
 	{
 		std::vector<const char *> layers;
 
@@ -17,10 +17,10 @@ namespace asc
 		//layers.push_back("VK_LAYER_LUNARG_assistant_layer"); // TODO: causes vkCreateDevice() to crash (but vkCreateInstance is successful with it)
 #endif
 
-		std::vector<const char *> extensions(info.instanceExtensionCount);
+		std::vector<const char *> extensions(appInfo.instanceExtensionCount);
 		for (uint32_t i = 0; i < extensions.size(); ++i)
 		{
-			extensions[i] = info.instanceExtensions[i];
+			extensions[i] = appInfo.instanceExtensions[i];
 		}
 
 #ifdef _DEBUG
@@ -28,11 +28,16 @@ namespace asc
 #endif
 
 		auto applicationInfo = vk::ApplicationInfo().setApiVersion(API_VERSION).setPEngineName(ENGINE_NAME).setEngineVersion(ENGINE_VERSION);
-		applicationInfo.setPApplicationName(info.applicationName).setApplicationVersion(VK_MAKE_VERSION(info.versionMajor, info.versionMinor, info.versionPatch));
+		applicationInfo.setPApplicationName(appInfo.name).setApplicationVersion(VK_MAKE_VERSION(appInfo.versionMajor, appInfo.versionMinor, appInfo.versionPatch));
 
 		auto instanceCreateInfo = vk::InstanceCreateInfo().setPApplicationInfo(&applicationInfo).setEnabledLayerCount(static_cast<uint32_t>(layers.size()));
 		instanceCreateInfo.setPpEnabledLayerNames(layers.data()).setEnabledExtensionCount(static_cast<uint32_t>(extensions.size())).setPpEnabledExtensionNames(extensions.data());
+		return new vk::Instance(vk::createInstance(instanceCreateInfo));
+	}
 
-		auto instance = vk::createInstance(instanceCreateInfo);
+	Context::Context(const ApplicationInfo &appInfo, std::function<VkSurfaceKHR(VkInstance)> createSurface)
+	{
+		instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(createInstance(appInfo), destroyInstance);
+		surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(reinterpret_cast<vk::SurfaceKHR*>(createSurface(*instance.get())), destroySurface);
 	}
 }
