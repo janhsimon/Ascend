@@ -13,6 +13,7 @@ namespace asc
 		uint32_t versionMajor, versionMinor, versionPatch;
 		uint32_t instanceExtensionCount;
 		const char* const* instanceExtensions = nullptr;
+		std::function<VkSurfaceKHR(VkInstance)> createSurfaceLambda = nullptr;
 
 		ApplicationInfo &setName(const char *name)
 		{
@@ -39,6 +40,12 @@ namespace asc
 			this->instanceExtensions = instanceExtensions;
 			return *this;
 		}
+
+		ApplicationInfo &setCreateSurfaceLambda(std::function<VkSurfaceKHR(VkInstance)> createSurfaceLambda)
+		{
+			this->createSurfaceLambda = createSurfaceLambda;
+			return *this;
+		}
 	};
 
 	class Context
@@ -52,6 +59,6 @@ namespace asc
 		std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)> surface;
 
 	public:
-		Context(const ApplicationInfo &appInfo, std::function<VkSurfaceKHR(VkInstance)> createSurface);
+		Context(const ApplicationInfo &appInfo);
 	};
 }

@@ -36,8 +36,7 @@ public:
 
 		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0);
 		appInfo.setInstanceExtensionCount(static_cast<uint32_t>(instanceExtensions.size())).setInstanceExtensions(instanceExtensions.data());
-
-		auto createSurface = [=](VkInstance instance) -> VkSurfaceKHR
+		appInfo.createSurfaceLambda = [=](VkInstance instance) -> VkSurfaceKHR
 		{
 			VkSurfaceKHR surface;
 
@@ -49,7 +48,7 @@ public:
 			return surface;
 		};
 
-		auto context = asc::Context(appInfo, createSurface);
+		auto context = asc::Context(appInfo);
 
 		SDL_Event event;
 		auto done = false;

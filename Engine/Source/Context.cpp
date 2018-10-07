@@ -35,9 +35,9 @@ namespace asc
 		return new vk::Instance(vk::createInstance(instanceCreateInfo));
 	}
 
-	Context::Context(const ApplicationInfo &appInfo, std::function<VkSurfaceKHR(VkInstance)> createSurface)
+	Context::Context(const ApplicationInfo &appInfo)
 	{
 		instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(createInstance(appInfo), destroyInstance);
-		surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(reinterpret_cast<vk::SurfaceKHR*>(createSurface(*instance.get())), destroySurface);
+		surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(reinterpret_cast<vk::SurfaceKHR*>(appInfo.createSurfaceLambda(*instance.get())), destroySurface);
 	}
 }
