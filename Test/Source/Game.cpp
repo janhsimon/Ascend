@@ -25,7 +25,7 @@ public:
 		unsigned int instanceExtensionCount = 0;
 		if (!SDL_Vulkan_GetInstanceExtensions(window, &instanceExtensionCount, nullptr))
 		{
-			throw std::runtime_error("Failed to get instance extensions: " + std::string(SDL_GetError()));
+			throw std::runtime_error("Failed to get instance extension count: " + std::string(SDL_GetError()));
 		}
 
 		std::vector<const char *> instanceExtensions(instanceExtensionCount);
@@ -39,16 +39,13 @@ public:
 		appInfo.createSurfaceLambda = [=](VkInstance instance) -> VkSurfaceKHR
 		{
 			VkSurfaceKHR surface;
-
 			if (!SDL_Vulkan_CreateSurface(window, instance, &surface))
 			{
 				throw std::runtime_error("Failed to create window surface.");
 			}
-
 			return surface;
 		};
-
-		auto context = asc::Context(appInfo);
+		auto engine = asc::Engine(appInfo);
 
 		SDL_Event event;
 		auto done = false;

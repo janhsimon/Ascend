@@ -3,8 +3,11 @@
   <ItemGroup>
     <ClInclude Include="Source\Ascend.hpp" />
     <ClInclude Include="Source\Context.hpp" />
+    <ClInclude Include="Source\Engine.hpp" />
+    <ClInclude Include="Source\ApplicationInfo.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Context.cpp" />
+    <ClCompile Include="Source\Engine.cpp" />
   </ItemGroup>
 </Project>
