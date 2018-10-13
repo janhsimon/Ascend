@@ -8,10 +8,11 @@ namespace asc
 		{
 			std::vector<const char *> layers;
 
-	#ifdef _DEBUG
-			layers.push_back("VK_LAYER_LUNARG_standard_validation");
-			//layers.push_back("VK_LAYER_LUNARG_assistant_layer"); // TODO: causes vkCreateDevice() to crash (but vkCreateInstance is successful with it)
-	#endif
+			if (appInfo.debugMode)
+			{
+				layers.push_back("VK_LAYER_LUNARG_standard_validation");
+				//layers.push_back("VK_LAYER_LUNARG_assistant_layer"); // TODO: causes vkCreateDevice() to crash (but vkCreateInstance is successful with it)
+			}
 
 			std::vector<const char *> extensions(appInfo.instanceExtensionCount);
 			for (uint32_t i = 0; i < extensions.size(); ++i)
@@ -19,9 +20,10 @@ namespace asc
 				extensions[i] = appInfo.instanceExtensions[i];
 			}
 
-	#ifdef _DEBUG
-			extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-	#endif
+			if (appInfo.debugMode)
+			{
+				extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+			}
 
 			auto applicationInfo = vk::ApplicationInfo().setApiVersion(API_VERSION).setPEngineName(ENGINE_NAME).setEngineVersion(ENGINE_VERSION);
 			applicationInfo.setPApplicationName(appInfo.name).setApplicationVersion(VK_MAKE_VERSION(appInfo.versionMajor, appInfo.versionMinor, appInfo.versionPatch));

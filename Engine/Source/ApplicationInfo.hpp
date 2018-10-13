@@ -11,6 +11,7 @@ namespace asc
 		uint32_t versionMajor, versionMinor, versionPatch;
 		uint32_t instanceExtensionCount;
 		const char* const* instanceExtensions = nullptr;
+		bool debugMode;
 		std::function<VkSurfaceKHR(VkInstance)> createSurfaceLambda = nullptr;
 
 		ApplicationInfo &setName(const char *name)
@@ -36,6 +37,12 @@ namespace asc
 		ApplicationInfo &setInstanceExtensions(const char* const* instanceExtensions)
 		{
 			this->instanceExtensions = instanceExtensions;
+			return *this;
+		}
+
+		ApplicationInfo &setDebugMode(bool debugMode)
+		{
+			this->debugMode = debugMode;
 			return *this;
 		}
 
