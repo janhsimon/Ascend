@@ -11,8 +11,9 @@ namespace asc
 		uint32_t versionMajor = 1, versionMinor = 0, versionPatch = 0;
 		uint32_t instanceExtensionCount = 0;
 		const char *const *instanceExtensions = nullptr;
-		bool debugMode = false;
 		std::function<VkSurfaceKHR*(VkInstance*)> createSurfaceLambda = nullptr;
+		bool debugMode = false;
+		std::function<void(const std::string &)> debugCallbackLambda = nullptr;
 
 		ApplicationInfo &setName(const char *name)
 		{
@@ -40,15 +41,21 @@ namespace asc
 			return *this;
 		}
 
+		ApplicationInfo &setCreateSurfaceLambda(std::function<VkSurfaceKHR*(VkInstance*)> createSurfaceLambda)
+		{
+			this->createSurfaceLambda = createSurfaceLambda;
+			return *this;
+		}
+
 		ApplicationInfo &setDebugMode(bool debugMode)
 		{
 			this->debugMode = debugMode;
 			return *this;
 		}
 
-		ApplicationInfo &setCreateSurfaceLambda(std::function<VkSurfaceKHR*(VkInstance*)> createSurfaceLambda)
+		ApplicationInfo &setDebugCallbackLambda(std::function<void(const std::string &)> debugCallbackLambda)
 		{
-			this->createSurfaceLambda = createSurfaceLambda;
+			this->debugCallbackLambda = debugCallbackLambda;
 			return *this;
 		}
 	};

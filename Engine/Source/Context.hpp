@@ -15,16 +15,34 @@ namespace asc
 			static constexpr uint32_t API_VERSION = VK_API_VERSION_1_0;
 			static constexpr char ENGINE_NAME[] = "Ascend";
 			static constexpr uint32_t ENGINE_VERSION = VK_MAKE_VERSION(1, 0, 0);
+			static constexpr char CREATE_DEBUG_MESSENGER_FUNCTION_NAME[] = "vkCreateDebugUtilsMessengerEXT";
+			static constexpr char DESTROY_DEBUG_MESSENGER_FUNCTION_NAME[] = "vkDestroyDebugUtilsMessengerEXT";
 
-			vk::Instance *createInstance(const asc::ApplicationInfo &appInfo);
+			ApplicationInfo applicationInfo;
+
+			vk::Instance *createInstance();
 			std::function<void(vk::Instance*)> destroyInstance = [](vk::Instance *instance) { if (instance) instance->destroy(); };
 			std::unique_ptr<vk::Instance, decltype(destroyInstance)> instance;
+
+			vk::DebugUtilsMessengerEXT *createDebugMessenger();
+			std::function<void(vk::DebugUtilsMessengerEXT*)> destroyDebugMessenger = [this](vk::DebugUtilsMessengerEXT *messenger)
+			{
+				if (instance)
+				{
+					// extension functions must be called through a function pointer
+					auto destroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance->getProcAddr(DESTROY_DEBUG_MESSENGER_FUNCTION_NAME));
+					destroyDebugUtilsMessengerEXT(*instance.get(), *messenger, nullptr);
+				}
+			};
+			std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)> debugMessenger;
 
 			std::function<void(vk::SurfaceKHR*)> destroySurface = [this](vk::SurfaceKHR *surface) { if (instance) instance->destroySurfaceKHR(*surface); };
 			std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)> surface;
 
 		public:
-			Context(const asc::ApplicationInfo &appInfo);
+			Context(const asc::ApplicationInfo &applicationInfo);
+
+			ApplicationInfo &getApplicationInfo() { return applicationInfo; }
 		};
 	}
 }

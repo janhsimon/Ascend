@@ -36,14 +36,8 @@ public:
 
 		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0);
 		appInfo.setInstanceExtensionCount(static_cast<uint32_t>(instanceExtensions.size())).setInstanceExtensions(instanceExtensions.data());
-
-		#ifdef NDEBUG
-			appInfo.setDebugMode(false);
-		#else
-			appInfo.setDebugMode(true);
-		#endif
 		
-		appInfo.createSurfaceLambda = [=](VkInstance *instance) -> VkSurfaceKHR*
+		appInfo.createSurfaceLambda = [this](VkInstance *instance) -> VkSurfaceKHR*
 		{
 			auto surface = new VkSurfaceKHR();
 			if (!SDL_Vulkan_CreateSurface(window, *instance, surface))
@@ -52,6 +46,15 @@ public:
 			}
 			return surface;
 		};
+
+		#ifndef NDEBUG
+			appInfo.setDebugMode(true);
+
+			appInfo.debugCallbackLambda = [this](const std::string &message)
+			{
+				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", message.c_str(), nullptr);
+			};
+		#endif
 		
 		auto engine = asc::Engine(appInfo);
 
