@@ -43,10 +43,10 @@ public:
 			appInfo.setDebugMode(true);
 		#endif
 		
-		appInfo.createSurfaceLambda = [=](VkInstance instance) -> VkSurfaceKHR
+		appInfo.createSurfaceLambda = [=](VkInstance *instance) -> VkSurfaceKHR*
 		{
-			VkSurfaceKHR surface;
-			if (!SDL_Vulkan_CreateSurface(window, instance, &surface))
+			auto surface = new VkSurfaceKHR();
+			if (!SDL_Vulkan_CreateSurface(window, *instance, surface))
 			{
 				throw std::runtime_error("Failed to create window surface.");
 			}

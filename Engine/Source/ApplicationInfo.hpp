@@ -7,12 +7,12 @@ namespace asc
 {
 	struct ApplicationInfo
 	{
-		const char *name;
-		uint32_t versionMajor, versionMinor, versionPatch;
-		uint32_t instanceExtensionCount;
-		const char* const* instanceExtensions = nullptr;
-		bool debugMode;
-		std::function<VkSurfaceKHR(VkInstance)> createSurfaceLambda = nullptr;
+		const char *name = "Untitled Game";
+		uint32_t versionMajor = 1, versionMinor = 0, versionPatch = 0;
+		uint32_t instanceExtensionCount = 0;
+		const char *const *instanceExtensions = nullptr;
+		bool debugMode = false;
+		std::function<VkSurfaceKHR*(VkInstance*)> createSurfaceLambda = nullptr;
 
 		ApplicationInfo &setName(const char *name)
 		{
@@ -46,7 +46,7 @@ namespace asc
 			return *this;
 		}
 
-		ApplicationInfo &setCreateSurfaceLambda(std::function<VkSurfaceKHR(VkInstance)> createSurfaceLambda)
+		ApplicationInfo &setCreateSurfaceLambda(std::function<VkSurfaceKHR*(VkInstance*)> createSurfaceLambda)
 		{
 			this->createSurfaceLambda = createSurfaceLambda;
 			return *this;
