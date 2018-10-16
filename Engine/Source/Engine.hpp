@@ -10,6 +10,6 @@ namespace asc
 		std::unique_ptr<internal::Context> context;
 
 	public:
-		Engine(const ApplicationInfo &appInfo);
+		Engine(const ApplicationInfo& applicationInfo);
 	};
 }

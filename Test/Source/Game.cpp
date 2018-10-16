@@ -6,7 +6,7 @@
 class Game
 {
 private:
-	SDL_Window *window;
+	SDL_Window* window;
 
 public:
 	Game()
@@ -28,7 +28,7 @@ public:
 			throw std::runtime_error("Failed to get instance extension count: " + std::string(SDL_GetError()));
 		}
 
-		std::vector<const char *> instanceExtensions(instanceExtensionCount);
+		std::vector<const char*> instanceExtensions(instanceExtensionCount);
 		if (!SDL_Vulkan_GetInstanceExtensions(window, &instanceExtensionCount, instanceExtensions.data()))
 		{
 			throw std::runtime_error("Failed to get instance extensions: " + std::string(SDL_GetError()));
@@ -37,7 +37,7 @@ public:
 		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0);
 		appInfo.setInstanceExtensionCount(static_cast<uint32_t>(instanceExtensions.size())).setInstanceExtensions(instanceExtensions.data());
 		
-		appInfo.createSurfaceLambda = [this](VkInstance *instance) -> VkSurfaceKHR*
+		appInfo.createSurfaceLambda = [this](const VkInstance* instance) -> VkSurfaceKHR*
 		{
 			auto surface = new VkSurfaceKHR();
 			if (!SDL_Vulkan_CreateSurface(window, *instance, surface))
@@ -49,8 +49,7 @@ public:
 
 		#ifndef NDEBUG
 			appInfo.setDebugMode(true);
-
-			appInfo.debugCallbackLambda = [this](const std::string &message)
+			appInfo.debugCallbackLambda = [](const std::string& message)
 			{
 				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", message.c_str(), nullptr);
 			};
@@ -83,13 +82,13 @@ public:
 	}
 };
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 	try
 	{
 		Game game;
 	}
-	catch (const std::exception &error)
+	catch (const std::exception& error)
 	{
 		SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", error.what(), nullptr);
 		return EXIT_FAILURE;

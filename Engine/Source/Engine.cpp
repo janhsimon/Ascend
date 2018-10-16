@@ -2,8 +2,8 @@
 
 namespace asc
 {
-	Engine::Engine(const ApplicationInfo &appInfo)
+	Engine::Engine(const ApplicationInfo& applicationInfo)
 	{
-		context = std::make_unique<internal::Context>(appInfo);
+		context = std::make_unique<internal::Context>(applicationInfo);
 	}
 }
