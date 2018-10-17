@@ -180,6 +180,7 @@
     <ClInclude Include="Source\ApplicationInfo.hpp" />
     <ClInclude Include="Source\Ascend.hpp" />
     <ClInclude Include="Source\Context.hpp" />
+    <ClInclude Include="Source\DebugCallback.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

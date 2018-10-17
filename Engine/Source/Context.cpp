@@ -1,17 +1,11 @@
 #include "Context.hpp"
+#include "DebugCallback.hpp"
 
 namespace asc
 {
 	namespace internal
 	{
-		static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
-		{
-			const auto context = static_cast<Context*>(userData);
-			context->getApplicationInfo().debugCallbackLambda(callbackData->pMessage);
-			return VK_FALSE;
-		}
-
-		vk::Instance* Context::createInstance()
+		void Context::createInstance()
 		{
 			std::vector<const char*> layers;
 
@@ -38,77 +32,109 @@ namespace asc
 			auto instanceCreateInfo = vk::InstanceCreateInfo().setEnabledLayerCount(static_cast<uint32_t>(layers.size())).setPpEnabledLayerNames(layers.data());
 			instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size())).setPpEnabledExtensionNames(extensions.data());
 			instanceCreateInfo.setPApplicationInfo(&appInfo);
-			return new vk::Instance(vk::createInstance(instanceCreateInfo));
+			const auto newInstance = new vk::Instance(vk::createInstance(instanceCreateInfo));
+
+			destroyInstance = [](vk::Instance* instance)
+			{
+				if (instance)
+				{
+					instance->destroy();
+				}
+			};
+
+			instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(newInstance, destroyInstance);
 		}
 
-		vk::DebugUtilsMessengerEXT* Context::createDebugMessenger()
+		void Context::createDebugMessenger()
 		{
-			if (!applicationInfo.debugMode)
-			{
-				return nullptr;
-			}
-
 			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPUserData(this).setPfnUserCallback(debugCallback);
 			debugMessengerCreateInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
 			
-			VkDebugUtilsMessengerEXT debugMessenger;
+			VkDebugUtilsMessengerEXT cStyleDebugMessenger;
 			const auto cStyleInstance = static_cast<VkInstance>(*instance.get());
 			const auto cStyleCreateInfo = static_cast<VkDebugUtilsMessengerCreateInfoEXT>(debugMessengerCreateInfo);
 
 			// extension functions must be called through a function pointer
 			const auto createDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(instance->getProcAddr(CREATE_DEBUG_MESSENGER_FUNCTION_NAME));
-			if (createDebugUtilsMessengerEXT(cStyleInstance, &cStyleCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS)
+			if (createDebugUtilsMessengerEXT(cStyleInstance, &cStyleCreateInfo, nullptr, &cStyleDebugMessenger) != VK_SUCCESS)
 			{
 				throw std::runtime_error("Failed to create debug messenger.");
 			}
+			const auto newDebugMessenger = new vk::DebugUtilsMessengerEXT(cStyleDebugMessenger);
 
-			return new vk::DebugUtilsMessengerEXT(debugMessenger);
+			destroyDebugMessenger = [&](vk::DebugUtilsMessengerEXT* messenger)
+			{
+				if (instance)
+				{
+					// extension functions must be called through a function pointer
+					auto destroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance->getProcAddr(DESTROY_DEBUG_MESSENGER_FUNCTION_NAME));
+					destroyDebugUtilsMessengerEXT(*instance.get(), *messenger, nullptr);
+				}
+			};
+
+			this->debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(newDebugMessenger, destroyDebugMessenger);
 		}
 
-		vk::PhysicalDevice* Context::selectPhysicalDevice()
+		void Context::createSurface()
+		{
+			const auto cStyleInstance = static_cast<VkInstance>(*instance.get());
+			const auto appSurface = reinterpret_cast<vk::SurfaceKHR*>(applicationInfo.createSurfaceLambda(&cStyleInstance));
+
+			destroySurface = [&](vk::SurfaceKHR* surface)
+			{
+				if (instance)
+				{
+					instance->destroySurfaceKHR(*surface);
+				}
+			};
+
+			surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(appSurface, destroySurface);
+		}
+
+		void Context::selectPhysicalDevice()
 		{
 			auto physicalDevices = instance->enumeratePhysicalDevices();
 
-			if (!physicalDevices.empty())
+			if (physicalDevices.empty())
 			{
 				throw std::runtime_error("Failed to find suitable physical device.");
 			}
 
-			for (const auto& physicalDevice : physicalDevices)
+			for (auto& physicalDevice : physicalDevices)
 			{
 				const auto physicalDeviceProperties = physicalDevice.getProperties();
 				if (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
 				{
-					return new vk::PhysicalDevice(physicalDevice);
+					this->physicalDevice = physicalDevice;
+					return;
 				}
 			}
 
-			return new vk::PhysicalDevice(*physicalDevices.begin());
+			physicalDevice = *physicalDevices.begin();
 		}
 
-		vk::Device* Context::createDevice()
+		void Context::selectQueueFamilyIndex()
 		{
-			const auto queueFamilyProperties = physicalDevice->getQueueFamilyProperties();
+			const auto queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 
-			auto queueFamilyIndex = -1;
 			for (uint32_t i = 0; i < queueFamilyProperties.size(); ++i)
 			{
 				if (queueFamilyProperties[i].queueCount > 0 && queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)
 				{
-					if (physicalDevice->getSurfaceSupportKHR(i, *surface.get()))
+					if (physicalDevice.getSurfaceSupportKHR(i, *surface.get()))
 					{
 						queueFamilyIndex = i;
-						break;
+						return;
 					}
 				}
 			}
 
-			if (queueFamilyIndex < 0)
-			{
-				throw std::runtime_error("Failed to find suitable queue family for physical device.");
-			}
+			throw std::runtime_error("Failed to find suitable queue family for physical device.");
+		}
 
+		void Context::createDevice()
+		{
 			const std::vector<float> queuePriorities = { 1.0f };
 			auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(queueFamilyIndex);
 			deviceQueueCreateInfo.setQueueCount(static_cast<uint32_t>(queuePriorities.size())).setPQueuePriorities(queuePriorities.data());
@@ -116,26 +142,43 @@ namespace asc
 			const auto deviceFeatures = vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true);
 
 			const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-			
+
 			auto deviceCreateInfo = vk::DeviceCreateInfo().setQueueCreateInfoCount(1).setPQueueCreateInfos(&deviceQueueCreateInfo).setPEnabledFeatures(&deviceFeatures);
 			deviceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(deviceExtensions.size())).setPpEnabledExtensionNames(deviceExtensions.data());
-			return new vk::Device(physicalDevice->createDevice(deviceCreateInfo));
+			const auto newDevice = new vk::Device(physicalDevice.createDevice(deviceCreateInfo));
+
+			destroyDevice = [](vk::Device* device)
+			{
+				if (device)
+				{
+					device->destroy();
+				}
+			};
+
+			device = std::unique_ptr<vk::Device, decltype(destroyDevice)>(newDevice, destroyDevice);
+		}
+
+		void Context::getQueue()
+		{
+			queue = device->getQueue(queueFamilyIndex, 0);
 		}
 
 		Context::Context(const asc::ApplicationInfo& applicationInfo)
 		{
 			this->applicationInfo = applicationInfo;
 
-			instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(createInstance(), destroyInstance);
-			debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(createDebugMessenger(), destroyDebugMessenger);
+			createInstance();
+			
+			if (applicationInfo.debugMode)
+			{
+				createDebugMessenger();
+			}
 
-			const auto cStyleInstance = static_cast<VkInstance>(*instance.get());
-			const auto appSurface = reinterpret_cast<vk::SurfaceKHR*>(applicationInfo.createSurfaceLambda(&cStyleInstance));
-			surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(appSurface, destroySurface);
-
-			physicalDevice = std::unique_ptr<vk::PhysicalDevice>(selectPhysicalDevice());
-
-			device = std::unique_ptr<vk::Device, decltype(destroyDevice)>(createDevice(), destroyDevice);
+			createSurface();
+			selectPhysicalDevice();
+			selectQueueFamilyIndex();
+			createDevice();
+			getQueue();
 		}
 	}
 }

@@ -21,31 +21,30 @@ namespace asc
 
 			ApplicationInfo applicationInfo;
 
-			vk::Instance* createInstance();
-			std::function<void(vk::Instance*)> destroyInstance = [](vk::Instance* instance) { if (instance) instance->destroy(); };
+			void createInstance();
+			std::function<void(vk::Instance*)> destroyInstance;
 			std::unique_ptr<vk::Instance, decltype(destroyInstance)> instance;
 
-			vk::DebugUtilsMessengerEXT* createDebugMessenger();
-			std::function<void(vk::DebugUtilsMessengerEXT*)> destroyDebugMessenger = [this](vk::DebugUtilsMessengerEXT* messenger)
-			{
-				if (instance)
-				{
-					// extension functions must be called through a function pointer
-					auto destroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance->getProcAddr(DESTROY_DEBUG_MESSENGER_FUNCTION_NAME));
-					destroyDebugUtilsMessengerEXT(*instance.get(), *messenger, nullptr);
-				}
-			};
+			void createDebugMessenger();
+			std::function<void(vk::DebugUtilsMessengerEXT*)> destroyDebugMessenger;
 			std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)> debugMessenger;
-
-			std::function<void(vk::SurfaceKHR*)> destroySurface = [this](vk::SurfaceKHR* surface) { if (instance) instance->destroySurfaceKHR(*surface); };
+			
+			void createSurface();
+			std::function<void(vk::SurfaceKHR*)> destroySurface;
 			std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)> surface;
 
-			vk::PhysicalDevice* selectPhysicalDevice();
-			std::unique_ptr<vk::PhysicalDevice> physicalDevice;
+			void selectPhysicalDevice();
+			vk::PhysicalDevice physicalDevice;
 
-			vk::Device* createDevice();
-			std::function<void(vk::Device*)> destroyDevice = [](vk::Device* device) { if (device) device->destroy(); };
+			void selectQueueFamilyIndex();
+			uint32_t queueFamilyIndex;
+
+			void createDevice();
+			std::function<void(vk::Device*)> destroyDevice;
 			std::unique_ptr<vk::Device, decltype(destroyDevice)> device;
+
+			void getQueue();
+			vk::Queue queue;
 
 		public:
 			Context(const asc::ApplicationInfo& applicationInfo);

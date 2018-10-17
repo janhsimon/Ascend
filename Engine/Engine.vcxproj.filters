@@ -5,6 +5,7 @@
     <ClInclude Include="Source\Context.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
     <ClInclude Include="Source\ApplicationInfo.hpp" />
+    <ClInclude Include="Source\DebugCallback.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Context.cpp" />
