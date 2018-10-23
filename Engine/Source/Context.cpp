@@ -47,7 +47,7 @@ namespace asc
 
 		void Context::createDebugMessenger()
 		{
-			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPUserData(this).setPfnUserCallback(debugCallback);
+			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPUserData(&applicationInfo).setPfnUserCallback(debugCallback);
 			debugMessengerCreateInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
 			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
 			
@@ -94,7 +94,7 @@ namespace asc
 
 		void Context::selectPhysicalDevice()
 		{
-			auto physicalDevices = instance->enumeratePhysicalDevices();
+			const auto physicalDevices = instance->enumeratePhysicalDevices();
 
 			if (physicalDevices.empty())
 			{
@@ -114,37 +114,62 @@ namespace asc
 			physicalDevice = *physicalDevices.begin();
 		}
 
-		void Context::selectQueueFamilyIndex()
+		void Context::selectQueueFamilyIndices()
 		{
-			const auto queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
+			auto graphicsQueueFamilyIndexFound = false, presentQueueFamilyIndexFound = false;
 
+			const auto queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
 			for (uint32_t i = 0; i < queueFamilyProperties.size(); ++i)
 			{
-				if (queueFamilyProperties[i].queueCount > 0 && queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)
+				if (queueFamilyProperties[i].queueCount > 0)
 				{
+					if (queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)
+					{
+						graphicsQueueFamilyIndex = i;
+						graphicsQueueFamilyIndexFound = true;
+					}
+
 					if (physicalDevice.getSurfaceSupportKHR(i, *surface.get()))
 					{
-						queueFamilyIndex = i;
-						return;
+						presentQueueFamilyIndex = i;
+						presentQueueFamilyIndexFound = true;
 					}
 				}
 			}
 
-			throw std::runtime_error("Failed to find suitable queue family for physical device.");
+			if (!graphicsQueueFamilyIndexFound)
+			{
+				throw std::runtime_error("Physical device lacks graphics queue family support.");
+			} 
+			
+			if (!presentQueueFamilyIndexFound)
+			{
+				throw std::runtime_error("Physical device lacks present queue family support.");
+			}
 		}
 
 		void Context::createDevice()
 		{
-			const std::vector<float> queuePriorities = { 1.0f };
-			auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(queueFamilyIndex);
-			deviceQueueCreateInfo.setQueueCount(static_cast<uint32_t>(queuePriorities.size())).setPQueuePriorities(queuePriorities.data());
-
 			const auto deviceFeatures = vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true);
-
 			const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-			auto deviceCreateInfo = vk::DeviceCreateInfo().setQueueCreateInfoCount(1).setPQueueCreateInfos(&deviceQueueCreateInfo).setPEnabledFeatures(&deviceFeatures);
+			constexpr float queuePriority = 1.0f;
+			std::vector<vk::DeviceQueueCreateInfo> deviceQueueCreateInfos;
+
+			auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
+			deviceQueueCreateInfo.setQueueCount(1).setPQueuePriorities(&queuePriority);
+			deviceQueueCreateInfos.push_back(deviceQueueCreateInfo);
+
+			if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
+			{
+				deviceQueueCreateInfo.setQueueFamilyIndex(presentQueueFamilyIndex);
+				deviceQueueCreateInfos.push_back(deviceQueueCreateInfo);
+			}
+
+			auto deviceCreateInfo = vk::DeviceCreateInfo().setPEnabledFeatures(&deviceFeatures);
 			deviceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(deviceExtensions.size())).setPpEnabledExtensionNames(deviceExtensions.data());
+			deviceCreateInfo.setQueueCreateInfoCount(static_cast<uint32_t>(deviceQueueCreateInfos.size())).setPQueueCreateInfos(deviceQueueCreateInfos.data());
+			
 			const auto newDevice = new vk::Device(physicalDevice.createDevice(deviceCreateInfo));
 
 			destroyDevice = [](vk::Device* device)
@@ -158,9 +183,10 @@ namespace asc
 			device = std::unique_ptr<vk::Device, decltype(destroyDevice)>(newDevice, destroyDevice);
 		}
 
-		void Context::getQueue()
+		void Context::selectQueues()
 		{
-			queue = device->getQueue(queueFamilyIndex, 0);
+			graphicsQueue = device->getQueue(graphicsQueueFamilyIndex, 0);
+			presentQueue = device->getQueue(presentQueueFamilyIndex, 0);
 		}
 
 		Context::Context(const asc::ApplicationInfo& applicationInfo)
@@ -176,9 +202,9 @@ namespace asc
 
 			createSurface();
 			selectPhysicalDevice();
-			selectQueueFamilyIndex();
+			selectQueueFamilyIndices();
 			createDevice();
-			getQueue();
+			selectQueues();
 		}
 	}
 }

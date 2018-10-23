@@ -20,36 +20,37 @@ namespace asc
 			static constexpr char DESTROY_DEBUG_MESSENGER_FUNCTION_NAME[] = "vkDestroyDebugUtilsMessengerEXT";
 
 			ApplicationInfo applicationInfo;
+			vk::PhysicalDevice physicalDevice;
+			uint32_t graphicsQueueFamilyIndex, presentQueueFamilyIndex;
+			vk::Queue graphicsQueue, presentQueue;
 
-			void createInstance();
 			std::function<void(vk::Instance*)> destroyInstance;
 			std::unique_ptr<vk::Instance, decltype(destroyInstance)> instance;
-
-			void createDebugMessenger();
+			
 			std::function<void(vk::DebugUtilsMessengerEXT*)> destroyDebugMessenger;
 			std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)> debugMessenger;
-			
-			void createSurface();
+						
 			std::function<void(vk::SurfaceKHR*)> destroySurface;
 			std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)> surface;
 
-			void selectPhysicalDevice();
-			vk::PhysicalDevice physicalDevice;
-
-			void selectQueueFamilyIndex();
-			uint32_t queueFamilyIndex;
-
-			void createDevice();
 			std::function<void(vk::Device*)> destroyDevice;
 			std::unique_ptr<vk::Device, decltype(destroyDevice)> device;
 
-			void getQueue();
-			vk::Queue queue;
+			void createInstance();
+			void createDebugMessenger();
+			void createSurface();
+			void selectPhysicalDevice();
+			void selectQueueFamilyIndices();
+			void createDevice();
+			void selectQueues();
 
 		public:
 			Context(const asc::ApplicationInfo& applicationInfo);
 
-			ApplicationInfo& getApplicationInfo() { return applicationInfo; }
+			ApplicationInfo& getApplicationInfo()
+			{
+				return applicationInfo;
+			}
 		};
 	}
 }
