@@ -42,15 +42,17 @@ namespace asc
 			void selectPhysicalDevice();
 			void selectQueueFamilyIndices();
 			void createDevice();
-			void selectQueues();
+			void retrieveQueues();
 
 		public:
 			Context(const asc::ApplicationInfo& applicationInfo);
 
-			ApplicationInfo& getApplicationInfo()
-			{
-				return applicationInfo;
-			}
+			ApplicationInfo& getApplicationInfo() { return applicationInfo; }
+			vk::PhysicalDevice* getPhysicalDevice() { return &physicalDevice; }
+			uint32_t getGraphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex; }
+			uint32_t getPresentQueueFamilyIndex() { return presentQueueFamilyIndex; }
+			vk::SurfaceKHR* getSurface() { return surface.get(); }
+			vk::Device* getDevice() { return device.get(); }
 		};
 	}
 }

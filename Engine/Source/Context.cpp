@@ -1,6 +1,8 @@
 #include "Context.hpp"
 #include "DebugCallback.hpp"
 
+#include <optional>
+
 namespace asc
 {
 	namespace internal
@@ -103,8 +105,10 @@ namespace asc
 
 			for (auto& physicalDevice : physicalDevices)
 			{
-				const auto physicalDeviceProperties = physicalDevice.getProperties();
-				if (physicalDeviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+				// TODO: check that wanted device extensions are supported
+				// TODO: check that swapchain support is adequate
+				const auto properties = physicalDevice.getProperties();
+				if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
 				{
 					this->physicalDevice = physicalDevice;
 					return;
@@ -116,36 +120,37 @@ namespace asc
 
 		void Context::selectQueueFamilyIndices()
 		{
-			auto graphicsQueueFamilyIndexFound = false, presentQueueFamilyIndexFound = false;
+			std::optional<uint32_t> selectedGraphicsQueueFamilyIndex, selectedPresentQueueFamilyIndex;
 
-			const auto queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
-			for (uint32_t i = 0; i < queueFamilyProperties.size(); ++i)
+			const auto queueFamilies = physicalDevice.getQueueFamilyProperties();
+			for (uint32_t i = 0; i < queueFamilies.size(); ++i)
 			{
-				if (queueFamilyProperties[i].queueCount > 0)
-				{
-					if (queueFamilyProperties[i].queueFlags & vk::QueueFlagBits::eGraphics)
-					{
-						graphicsQueueFamilyIndex = i;
-						graphicsQueueFamilyIndexFound = true;
-					}
+				const auto queueFamily = queueFamilies[i];
 
-					if (physicalDevice.getSurfaceSupportKHR(i, *surface.get()))
-					{
-						presentQueueFamilyIndex = i;
-						presentQueueFamilyIndexFound = true;
-					}
+				if (queueFamily.queueCount <= 0)
+				{
+					continue;
+				}
+
+				if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
+				{
+					selectedGraphicsQueueFamilyIndex = i;
+				}
+
+				if (physicalDevice.getSurfaceSupportKHR(i, *surface.get()))
+				{
+					selectedPresentQueueFamilyIndex = i;
+				}
+
+				if (selectedGraphicsQueueFamilyIndex.has_value() && selectedPresentQueueFamilyIndex.has_value())
+				{
+					graphicsQueueFamilyIndex = selectedGraphicsQueueFamilyIndex.value();
+					presentQueueFamilyIndex = selectedPresentQueueFamilyIndex.value();
+					return;
 				}
 			}
 
-			if (!graphicsQueueFamilyIndexFound)
-			{
-				throw std::runtime_error("Physical device lacks graphics queue family support.");
-			} 
-			
-			if (!presentQueueFamilyIndexFound)
-			{
-				throw std::runtime_error("Physical device lacks present queue family support.");
-			}
+			throw std::runtime_error("Physical device does not provide required queues.");
 		}
 
 		void Context::createDevice()
@@ -153,11 +158,11 @@ namespace asc
 			const auto deviceFeatures = vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true);
 			const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-			constexpr float queuePriority = 1.0f;
 			std::vector<vk::DeviceQueueCreateInfo> deviceQueueCreateInfos;
 
+			constexpr float QUEUE_PRIORITY = 1.0f;
 			auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
-			deviceQueueCreateInfo.setQueueCount(1).setPQueuePriorities(&queuePriority);
+			deviceQueueCreateInfo.setQueueCount(1).setPQueuePriorities(&QUEUE_PRIORITY);
 			deviceQueueCreateInfos.push_back(deviceQueueCreateInfo);
 
 			if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
@@ -183,7 +188,7 @@ namespace asc
 			device = std::unique_ptr<vk::Device, decltype(destroyDevice)>(newDevice, destroyDevice);
 		}
 
-		void Context::selectQueues()
+		void Context::retrieveQueues()
 		{
 			graphicsQueue = device->getQueue(graphicsQueueFamilyIndex, 0);
 			presentQueue = device->getQueue(presentQueueFamilyIndex, 0);
@@ -204,7 +209,7 @@ namespace asc
 			selectPhysicalDevice();
 			selectQueueFamilyIndices();
 			createDevice();
-			selectQueues();
+			retrieveQueues();
 		}
 	}
 }
