@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="Source\Ascend.hpp" />
     <ClInclude Include="Source\Context.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
     <ClInclude Include="Source\ApplicationInfo.hpp" />
     <ClInclude Include="Source\DebugCallback.hpp" />
     <ClInclude Include="Source\Swapchain.hpp" />
+    <ClInclude Include="Include\Ascend.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Context.cpp" />

@@ -75,7 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(ProjectDir)</OutDir>
+    <OutDir>$(ProjectDir)Lib\</OutDir>
     <TargetName>Ascend</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
@@ -84,7 +84,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(ProjectDir)</OutDir>
+    <OutDir>$(ProjectDir)Lib\</OutDir>
     <TargetName>Ascend</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
@@ -120,7 +120,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <OutputFile>$(ProjectDir)$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(ProjectDir)Lib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib</AdditionalDependencies>
     </Lib>
@@ -165,7 +165,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <OutputFile>$(ProjectDir)$(TargetName)$(TargetExt)</OutputFile>
+      <OutputFile>$(ProjectDir)Lib\$(TargetName)$(TargetExt)</OutputFile>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib</AdditionalDependencies>
     </Lib>
@@ -176,8 +176,8 @@
     <ClCompile Include="Source\Swapchain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Ascend.hpp" />
     <ClInclude Include="Source\ApplicationInfo.hpp" />
-    <ClInclude Include="Source\Ascend.hpp" />
     <ClInclude Include="Source\Context.hpp" />
     <ClInclude Include="Source\DebugCallback.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
