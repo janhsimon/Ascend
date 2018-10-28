@@ -34,10 +34,9 @@ public:
 			throw std::runtime_error("Failed to get instance extensions: " + std::string(SDL_GetError()));
 		}
 
-		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0);
-		appInfo.setInstanceExtensionCount(static_cast<uint32_t>(instanceExtensions.size())).setInstanceExtensions(instanceExtensions.data());
+		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0).setInstanceExtensions(instanceExtensions);
 		
-		appInfo.createSurfaceLambda = [this](const VkInstance* instance) -> VkSurfaceKHR*
+		appInfo.createSurfaceLambda = [&](const VkInstance* instance) -> VkSurfaceKHR*
 		{
 			auto surface = new VkSurfaceKHR();
 			if (!SDL_Vulkan_CreateSurface(window, *instance, surface))
@@ -48,7 +47,6 @@ public:
 		};
 
 		#ifndef NDEBUG
-			appInfo.setDebugMode(true);
 			appInfo.debugCallbackLambda = [](const std::string& message)
 			{
 				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", message.c_str(), nullptr);
@@ -56,6 +54,9 @@ public:
 		#endif
 		
 		auto engine = asc::Engine(appInfo);
+
+		engine.loadShader("Shaders/Test.vert.spv", asc::ShaderType::Vertex);
+		engine.loadShader("Shaders/Test.frag.spv", asc::ShaderType::Fragment);
 
 		SDL_Event event;
 		auto done = false;

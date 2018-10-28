@@ -9,31 +9,22 @@ namespace asc
 	{
 		void Context::createInstance()
 		{
-			std::vector<const char*> layers;
-
-			if (applicationInfo.debugMode)
-			{
-				layers.push_back(STANDARD_VALIDATION_LAYER_NAME);
-			}
-
-			std::vector<const char*> extensions(applicationInfo.instanceExtensionCount);
-			for (uint32_t i = 0; i < extensions.size(); ++i)
-			{
-				extensions[i] = applicationInfo.instanceExtensions[i];
-			}
-
-			if (applicationInfo.debugMode)
-			{
-				extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			}
-
 			auto appInfo = vk::ApplicationInfo().setApiVersion(API_VERSION).setPEngineName(ENGINE_NAME).setEngineVersion(ENGINE_VERSION);
 			appInfo.setApplicationVersion(VK_MAKE_VERSION(applicationInfo.versionMajor, applicationInfo.versionMinor, applicationInfo.versionPatch));
 			appInfo.setPApplicationName(applicationInfo.name);
 
-			auto instanceCreateInfo = vk::InstanceCreateInfo().setEnabledLayerCount(static_cast<uint32_t>(layers.size())).setPpEnabledLayerNames(layers.data());
+			auto instanceCreateInfo = vk::InstanceCreateInfo().setPApplicationInfo(&appInfo);
+
+			const std::vector<const char*> layers = { STANDARD_VALIDATION_LAYER_NAME };
+			std::vector<const char*> extensions(applicationInfo.instanceExtensions);
+
+			if (applicationInfo.debugCallbackLambda)
+			{
+				instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(layers.size())).setPpEnabledLayerNames(layers.data());
+				extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			}
+
 			instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size())).setPpEnabledExtensionNames(extensions.data());
-			instanceCreateInfo.setPApplicationInfo(&appInfo);
 			const auto newInstance = new vk::Instance(vk::createInstance(instanceCreateInfo));
 
 			destroyInstance = [](vk::Instance* instance)
@@ -75,7 +66,7 @@ namespace asc
 				}
 			};
 
-			this->debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(newDebugMessenger, destroyDebugMessenger);
+			debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(newDebugMessenger, destroyDebugMessenger);
 		}
 
 		void Context::createSurface()
@@ -103,7 +94,7 @@ namespace asc
 				throw std::runtime_error("Failed to find suitable physical device.");
 			}
 
-			for (auto& physicalDevice : physicalDevices)
+			for (const auto& physicalDevice : physicalDevices)
 			{
 				// TODO: check that wanted device extensions are supported
 				// TODO: check that swapchain support is adequate
@@ -163,12 +154,12 @@ namespace asc
 			constexpr float QUEUE_PRIORITY = 1.0f;
 			auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
 			deviceQueueCreateInfo.setQueueCount(1).setPQueuePriorities(&QUEUE_PRIORITY);
-			deviceQueueCreateInfos.push_back(deviceQueueCreateInfo);
+			deviceQueueCreateInfos.emplace_back(deviceQueueCreateInfo);
 
 			if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
 			{
 				deviceQueueCreateInfo.setQueueFamilyIndex(presentQueueFamilyIndex);
-				deviceQueueCreateInfos.push_back(deviceQueueCreateInfo);
+				deviceQueueCreateInfos.emplace_back(deviceQueueCreateInfo);
 			}
 
 			auto deviceCreateInfo = vk::DeviceCreateInfo().setPEnabledFeatures(&deviceFeatures);
@@ -194,13 +185,12 @@ namespace asc
 			presentQueue = device->getQueue(presentQueueFamilyIndex, 0);
 		}
 
-		Context::Context(const asc::ApplicationInfo& applicationInfo)
+		Context::Context(const asc::ApplicationInfo& _applicationInfo)
+			: applicationInfo(_applicationInfo)
 		{
-			this->applicationInfo = applicationInfo;
-
 			createInstance();
 			
-			if (applicationInfo.debugMode)
+			if (applicationInfo.debugCallbackLambda)
 			{
 				createDebugMessenger();
 			}

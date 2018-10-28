@@ -5,6 +5,12 @@
 
 namespace asc
 {
+	enum ShaderType
+	{
+		Vertex,
+		Fragment
+	};
+
 	class Engine
 	{
 	private:
@@ -13,5 +19,7 @@ namespace asc
 
 	public:
 		Engine(const ApplicationInfo& applicationInfo);
+
+		void loadShader(const std::string& filename, const ShaderType type);
 	};
 }

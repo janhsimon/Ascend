@@ -4,7 +4,7 @@ namespace asc
 {
 	namespace internal
 	{
-		void Swapchain::selectSurfaceFormat(Context* context)
+		void Swapchain::selectSurfaceFormat()
 		{
 			constexpr auto WANTED_SURFACE_FORMAT = vk::Format::eB8G8R8A8Unorm;
 			constexpr auto WANTED_SURFACE_COLOR_SPACE = vk::ColorSpaceKHR::eSrgbNonlinear;
@@ -34,7 +34,7 @@ namespace asc
 			}
 		}
 
-		void Swapchain::selectPresentMode(Context* context)
+		void Swapchain::selectPresentMode()
 		{
 			// fifo is guaranteed to be available and requires 2 images in the swapchain
 			presentMode = vk::PresentModeKHR::eFifo;
@@ -53,17 +53,17 @@ namespace asc
 			}
 		}
 
-		void Swapchain::selectSwapExtent(Context* context)
+		void Swapchain::selectSwapExtent()
 		{
 			const auto surfaceCapabilities = context->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*context->getSurface());
 			extent = surfaceCapabilities.currentExtent;
 		}
 
-		void Swapchain::createSwapchain(Context* context)
+		void Swapchain::createSwapchain()
 		{
 			auto swapchainCreateInfo = vk::SwapchainCreateInfoKHR().setSurface(*context->getSurface()).setImageFormat(surfaceFormat).setImageColorSpace(surfaceColorSpace);
 			swapchainCreateInfo.setPresentMode(presentMode).setMinImageCount(imageCount).setImageExtent(extent);
-			swapchainCreateInfo.setImageArrayLayers(1).setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+			swapchainCreateInfo.setImageArrayLayers(1).setClipped(true).setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
 
 			const auto graphicsQueueFamilyIndex = context->getGraphicsQueueFamilyIndex();
 			const auto presentQueueFamilyIndex = context->getPresentQueueFamilyIndex();
@@ -77,7 +77,7 @@ namespace asc
 
 			const auto newSwapchain = new vk::SwapchainKHR(context->getDevice()->createSwapchainKHR(swapchainCreateInfo));
 
-			destroySwapchain = [context](vk::SwapchainKHR* swapchain)
+			destroySwapchain = [&](vk::SwapchainKHR* swapchain)
 			{
 				if (context && context->getDevice())
 				{
@@ -88,12 +88,26 @@ namespace asc
 			swapchain = std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)>(newSwapchain, destroySwapchain);
 		}
 
-		Swapchain::Swapchain(Context* context)
+		void Swapchain::createImages()
 		{
-			selectSurfaceFormat(context);
-			selectPresentMode(context);
-			selectSwapExtent(context);
-			createSwapchain(context);
+			images.clear();
+
+			const auto retrievedImages = context->getDevice()->getSwapchainImagesKHR(*swapchain);
+			images.reserve(retrievedImages.size());
+			for (const auto& image : retrievedImages)
+			{
+				images.emplace_back(context->getDevice(), image, surfaceFormat);
+			}
+		}
+
+		Swapchain::Swapchain(Context* _context)
+			: context(_context)
+		{
+			selectSurfaceFormat();
+			selectPresentMode();
+			selectSwapExtent();
+			createSwapchain();
+			createImages();
 		}
 	}
 }

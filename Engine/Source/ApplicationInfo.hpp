@@ -9,10 +9,8 @@ namespace asc
 	{
 		const char* name = "Untitled Game";
 		uint32_t versionMajor = 1, versionMinor = 0, versionPatch = 0;
-		uint32_t instanceExtensionCount = 0;
-		const char* const* instanceExtensions = nullptr;
+		std::vector<const char*> instanceExtensions = {};
 		std::function<VkSurfaceKHR*(const VkInstance*)> createSurfaceLambda = nullptr;
-		bool debugMode = false;
 		std::function<void(const std::string&)> debugCallbackLambda = nullptr;
 
 		ApplicationInfo& setName(const char* name)
@@ -29,13 +27,7 @@ namespace asc
 			return *this;
 		}
 
-		ApplicationInfo& setInstanceExtensionCount(uint32_t instanceExtensionCount)
-		{
-			this->instanceExtensionCount = instanceExtensionCount;
-			return *this;
-		}
-
-		ApplicationInfo& setInstanceExtensions(const char* const* instanceExtensions)
+		ApplicationInfo& setInstanceExtensions(const std::vector<const char*> &instanceExtensions)
 		{
 			this->instanceExtensions = instanceExtensions;
 			return *this;
@@ -44,12 +36,6 @@ namespace asc
 		ApplicationInfo& setCreateSurfaceLambda(std::function<VkSurfaceKHR*(const VkInstance*)> createSurfaceLambda)
 		{
 			this->createSurfaceLambda = createSurfaceLambda;
-			return *this;
-		}
-
-		ApplicationInfo& setDebugMode(bool debugMode)
-		{
-			this->debugMode = debugMode;
 			return *this;
 		}
 

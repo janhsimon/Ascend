@@ -78,6 +78,7 @@
     <OutDir>$(ProjectDir)Lib\</OutDir>
     <TargetName>Ascend</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IntDir>$(ProjectDir)Intermediate\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -87,6 +88,7 @@
     <OutDir>$(ProjectDir)Lib\</OutDir>
     <TargetName>Ascend</TargetName>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IntDir>$(ProjectDir)Intermediate\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -173,7 +175,9 @@
   <ItemGroup>
     <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
+    <ClCompile Include="Source\Shader.cpp" />
     <ClCompile Include="Source\Swapchain.cpp" />
+    <ClCompile Include="Source\SwapchainImage.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Ascend.hpp" />
@@ -181,7 +185,9 @@
     <ClInclude Include="Source\Context.hpp" />
     <ClInclude Include="Source\DebugCallback.hpp" />
     <ClInclude Include="Source\Engine.hpp" />
+    <ClInclude Include="Source\Shader.hpp" />
     <ClInclude Include="Source\Swapchain.hpp" />
+    <ClInclude Include="Source\SwapchainImage.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

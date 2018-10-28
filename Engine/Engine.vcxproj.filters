@@ -7,10 +7,14 @@
     <ClInclude Include="Source\DebugCallback.hpp" />
     <ClInclude Include="Source\Swapchain.hpp" />
     <ClInclude Include="Include\Ascend.hpp" />
+    <ClInclude Include="Source\SwapchainImage.hpp" />
+    <ClInclude Include="Source\Shader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Context.cpp" />
     <ClCompile Include="Source\Engine.cpp" />
     <ClCompile Include="Source\Swapchain.cpp" />
+    <ClCompile Include="Source\SwapchainImage.cpp" />
+    <ClCompile Include="Source\Shader.cpp" />
   </ItemGroup>
 </Project>

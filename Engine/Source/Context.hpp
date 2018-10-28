@@ -45,7 +45,7 @@ namespace asc
 			void retrieveQueues();
 
 		public:
-			Context(const asc::ApplicationInfo& applicationInfo);
+			Context(const asc::ApplicationInfo& _applicationInfo);
 
 			ApplicationInfo& getApplicationInfo() { return applicationInfo; }
 			vk::PhysicalDevice* getPhysicalDevice() { return &physicalDevice; }

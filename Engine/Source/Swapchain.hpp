@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Context.hpp"
+#include "SwapchainImage.hpp"
 
 namespace asc
 {
@@ -9,22 +9,25 @@ namespace asc
 		class Swapchain
 		{
 		private:
+			Context* context;
 			vk::Format surfaceFormat;
 			vk::ColorSpaceKHR surfaceColorSpace;
 			vk::PresentModeKHR presentMode;
 			uint32_t imageCount;
 			vk::Extent2D extent;
+			std::vector<SwapchainImage> images;
 
 			std::function<void(vk::SwapchainKHR*)> destroySwapchain;
 			std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)> swapchain;
 
-			void selectSurfaceFormat(Context* context);
-			void selectPresentMode(Context* context);
-			void selectSwapExtent(Context* context);
-			void createSwapchain(Context* context);
+			void selectSurfaceFormat();
+			void selectPresentMode();
+			void selectSwapExtent();
+			void createSwapchain();
+			void createImages();
 
 		public:
-			Swapchain(Context* context);
+			Swapchain(Context* _context);
 		};
 	}
 }
