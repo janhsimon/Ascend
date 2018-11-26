@@ -46,7 +46,7 @@ public:
 			return surface;
 		};
 
-		#ifndef NDEBUG
+		#ifdef DEBUG
 			appInfo.debugCallbackLambda = [](const std::string& message)
 			{
 				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", message.c_str(), nullptr);

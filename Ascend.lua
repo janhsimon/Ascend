@@ -19,11 +19,12 @@ project "Engine"
 	libdirs { (vulkansdk .. "/Lib") }
 	links { "vulkan-1" }
 
+	defines { "ASC_BUILD_DLL" }
+
 	filter "system:windows"
 		cppdialect "c++17"
 		staticruntime "On"
 		systemversion "latest"
-		defines { "ASC_BUILD_DLL" }
 
 	filter "configurations:Debug"
 		defines "DEBUG"
