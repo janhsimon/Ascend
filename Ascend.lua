@@ -47,7 +47,7 @@ project "Sandbox"
 	libdirs { "%{prj.name}/Lib/SDL2-2.0.9/lib/x64", (vulkansdk .. "/Lib") }
 	links { "Engine", "SDL2", "SDL2main", "vulkan-1" }
 
-	postbuildcommands { "{COPY} Lib/SDL2-2.0.9/lib/x64/SDL2.dll", "{COPY} ../Engine/Ascend.dll" }
+	postbuildcommands { "{COPY} ../Engine/Ascend.dll" }
 
 	filter "system:windows"
 		cppdialect "c++17"

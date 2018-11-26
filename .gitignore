@@ -9,5 +9,5 @@ Engine/Engine.*
 
 # Sandbox project
 Sandbox/Temp
-Sandbox/*.dll
+Sandbox/Ascend.*
 Sandbox/Sandbox.*
