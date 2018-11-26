@@ -260,6 +260,11 @@ paket-files/
 __pycache__/
 *.pyc
 
-# Binaries
-Engine/*.lib
-Test/*.exe
+# Binaries and intermediates
+*.sln
+Engine/Temp
+Engine/Ascend.*
+Engine/Engine.*
+Sandbox/Temp
+Sandbox/*.dll
+Sandbox/Sandbox.*
