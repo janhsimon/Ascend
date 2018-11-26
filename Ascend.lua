@@ -11,7 +11,7 @@ project "Engine"
 	language "C++"
 	files { "%{prj.name}/Source/**.cpp", "%{prj.name}/Source/**.hpp" }
 	objdir "%{prj.name}/Temp"
-	targetdir "%{prj.name}"
+	targetdir "%{prj.name}/Bin"
 	targetname "Ascend"
 
 	includedirs { (vulkansdk .. "/Include") }
@@ -40,14 +40,15 @@ project "Sandbox"
 	language "C++"
 	files { "%{prj.name}/Source/**.cpp", "%{prj.name}/Source/**.hpp" }
 	objdir "%{prj.name}/Temp"
-	targetdir "%{prj.name}"
+	targetdir "%{prj.name}/Bin"
+	debugdir "Sandbox/Bin" -- %{prj.name} does not work correctly with debugdir
 
 	includedirs { "Engine/Include", "%{prj.name}/lib/SDL2-2.0.9/include", (vulkansdk .. "/Include") }
 
 	libdirs { "%{prj.name}/Lib/SDL2-2.0.9/lib/x64", (vulkansdk .. "/Lib") }
 	links { "Engine", "SDL2", "SDL2main", "vulkan-1" }
 
-	postbuildcommands { "{COPY} ../Engine/Ascend.dll" }
+	postbuildcommands { "{COPY} ../Engine/Bin/Ascend.dll Bin/" }
 
 	filter "system:windows"
 		cppdialect "c++17"

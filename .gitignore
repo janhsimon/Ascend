@@ -3,11 +3,13 @@
 *.sln
 
 # Engine project
+Engine/*.vcxproj*
+Engine/Bin
 Engine/Temp
-Engine/Ascend.*
-Engine/Engine.*
+
 
 # Sandbox project
+Sandbox/*.vcxproj*
+Sandbox/Bin/Ascend.dll
+Sandbox/Bin/Sandbox.*
 Sandbox/Temp
-Sandbox/Ascend.*
-Sandbox/Sandbox.*
