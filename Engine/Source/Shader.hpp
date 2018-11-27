@@ -9,14 +9,18 @@ namespace asc
 		class Shader
 		{
 		private:
-			vk::Device* device;
+			static constexpr char SHADER_PROGRAM_ENTRY_POINT[] = "main";
+
+			const vk::Device* device;
 			vk::ShaderStageFlagBits shaderStageFlags;
 
-			std::function<void(vk::ShaderModule*)> destroyShaderModule;// = [this](vk::ShaderModule *shaderModule) { if (context->getDevice()) context->getDevice()->destroyShaderModule(*shaderModule); };
+			std::function<void(vk::ShaderModule*)> destroyShaderModule;
 			std::unique_ptr<vk::ShaderModule, decltype(destroyShaderModule)> shaderModule;
 
 		public:
-			Shader(vk::Device* _device, const std::string& filename, vk::ShaderStageFlagBits _shaderStageFlags);
+			Shader(const vk::Device* _device, const std::string& filename, vk::ShaderStageFlagBits _shaderStageFlags);
+
+			vk::PipelineShaderStageCreateInfo getPipelineShaderStageCreateInfo() const;
 		};
 	}
 }

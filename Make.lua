@@ -41,7 +41,7 @@ project "Sandbox"
 	files { "%{prj.name}/Source/**.cpp", "%{prj.name}/Source/**.hpp" }
 	objdir "%{prj.name}/Temp"
 	targetdir "%{prj.name}/Bin"
-	debugdir "Sandbox/Bin" -- %{prj.name} does not work correctly with debugdir
+	debugdir "Sandbox/Bin" -- %{prj.name} does not work correctly with debugdir, results in "Sandbox/Sandbox/Bin"
 
 	includedirs { "Engine/Include", "%{prj.name}/lib/SDL2-2.0.9/include", (vulkansdk .. "/Include") }
 

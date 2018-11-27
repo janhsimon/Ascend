@@ -1,3 +1,0 @@
-@echo off
-Premake\premake5.exe vs2017 --file=Ascend.lua
-pause

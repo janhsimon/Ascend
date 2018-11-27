@@ -36,6 +36,12 @@ namespace asc
 			std::function<void(vk::Device*)> destroyDevice;
 			std::unique_ptr<vk::Device, decltype(destroyDevice)> device;
 
+			std::function<void(vk::CommandPool*)> destroyCommandPool;
+			std::unique_ptr<vk::CommandPool, decltype(destroyCommandPool)> commandPool;
+
+			std::function<void(vk::Semaphore*)> destroySemaphore;
+			std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)> imageAvailableSemaphore, renderFinishedSemaphore;
+
 			void createInstance();
 			void createDebugMessenger();
 			void createSurface();
@@ -43,16 +49,23 @@ namespace asc
 			void selectQueueFamilyIndices();
 			void createDevice();
 			void retrieveQueues();
+			void createCommandPool();
+			void createSemaphores();
 
 		public:
 			Context(const asc::ApplicationInfo& _applicationInfo);
 
 			ApplicationInfo& getApplicationInfo() { return applicationInfo; }
-			vk::PhysicalDevice* getPhysicalDevice() { return &physicalDevice; }
-			uint32_t getGraphicsQueueFamilyIndex() { return graphicsQueueFamilyIndex; }
-			uint32_t getPresentQueueFamilyIndex() { return presentQueueFamilyIndex; }
-			vk::SurfaceKHR* getSurface() { return surface.get(); }
-			vk::Device* getDevice() { return device.get(); }
+			vk::PhysicalDevice getPhysicalDevice() const { return physicalDevice; }
+			uint32_t getGraphicsQueueFamilyIndex() const { return graphicsQueueFamilyIndex; }
+			uint32_t getPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }
+			vk::Queue getGraphicsQueue() const { return graphicsQueue; }
+			vk::Queue getPresentQueue() const { return presentQueue; }
+			vk::SurfaceKHR* getSurface() const { return surface.get(); }
+			vk::Device* getDevice() const { return device.get(); }
+			vk::CommandPool* getCommandPool() const { return commandPool.get(); }
+			vk::Semaphore* getImageAvailableSemaphore() const { return imageAvailableSemaphore.get(); }
+			vk::Semaphore* getRenderFinishedSemaphore() const { return renderFinishedSemaphore.get(); }
 		};
 	}
 }

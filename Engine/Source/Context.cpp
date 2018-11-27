@@ -185,6 +185,40 @@ namespace asc
 			presentQueue = device->getQueue(presentQueueFamilyIndex, 0);
 		}
 
+		void Context::createCommandPool()
+		{
+			auto commandPoolCreateInfo = vk::CommandPoolCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
+			auto newCommandPool = new vk::CommandPool(device->createCommandPool(commandPoolCreateInfo));
+			
+			destroyCommandPool = [&](vk::CommandPool* commandPool)
+			{
+				if (device)
+				{
+					device->destroyCommandPool(*commandPool);
+				}
+			};
+			
+			commandPool = std::unique_ptr<vk::CommandPool, decltype(destroyCommandPool)>(newCommandPool, destroyCommandPool);
+		}
+
+		void Context::createSemaphores()
+		{
+			const auto semaphoreCreateInfo = vk::SemaphoreCreateInfo();
+			auto newImageAvailableSemaphore = new vk::Semaphore(device->createSemaphore(semaphoreCreateInfo));
+			auto newRenderFinishedSemaphore = new vk::Semaphore(device->createSemaphore(semaphoreCreateInfo));
+
+			destroySemaphore = [&](vk::Semaphore* semaphore)
+			{
+				if (device)
+				{
+					device->destroySemaphore(*semaphore);
+				}
+			};
+
+			imageAvailableSemaphore = std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)>(newImageAvailableSemaphore, destroySemaphore);
+			renderFinishedSemaphore = std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)>(newRenderFinishedSemaphore, destroySemaphore);
+		}
+
 		Context::Context(const asc::ApplicationInfo& _applicationInfo)
 			: applicationInfo(_applicationInfo)
 		{
@@ -200,6 +234,8 @@ namespace asc
 			selectQueueFamilyIndices();
 			createDevice();
 			retrieveQueues();
+			createCommandPool();
+			createSemaphores();
 		}
 	}
 }

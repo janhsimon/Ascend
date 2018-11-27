@@ -1,5 +1,4 @@
 #include "Engine.hpp"
-#include "Shader.hpp"
 
 namespace asc
 {
@@ -7,17 +6,44 @@ namespace asc
 	{
 		context = std::make_unique<internal::Context>(applicationInfo);
 		swapchain = std::make_unique<internal::Swapchain>(context.get());
+		pipeline = std::make_unique<internal::Pipeline>(context->getDevice(), swapchain->getExtent(), swapchain->getRenderPass());
+		
+		swapchain->recordImageCommandBuffers(pipeline->getPipeline());
 	}
 
+	/*
 	void Engine::loadShader(const std::string& filename, const ShaderType type)
 	{
-		auto flags = vk::ShaderStageFlagBits::eVertex;
+		const auto flags = (type == ShaderType::Vertex) ? vk::ShaderStageFlagBits::eVertex : vk::ShaderStageFlagBits::eFragment;
+		internal::Shader vertexShader(context->getDevice(), filename, flags);
+	}
+	*/
 
-		if (type == ShaderType::Fragment)
+	void Engine::renderFrame()
+	{
+		auto nextImage = context->getDevice()->acquireNextImageKHR(*swapchain->getSwapchain(), std::numeric_limits<uint64_t>::max(), *context->getImageAvailableSemaphore(), nullptr);
+		auto imageIndex = nextImage.value;
+
 		{
-			flags = vk::ShaderStageFlagBits::eFragment;
+			const std::array<vk::Semaphore, 1> waitForSemaphores = { *context->getImageAvailableSemaphore() };
+			const std::array<vk::PipelineStageFlags, 1> waitForStages = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+			const std::array<vk::Semaphore, 1> signalSemaphores = { *context->getRenderFinishedSemaphore() };
+			const std::array<vk::CommandBuffer, 1> commandBuffers = { swapchain->getImage(imageIndex)->getCommandBuffer() };
+
+			auto submitInfo = vk::SubmitInfo();
+			submitInfo.setWaitSemaphoreCount(static_cast<uint32_t>(waitForSemaphores.size())).setPWaitSemaphores(waitForSemaphores.data()).setPWaitDstStageMask(waitForStages.data());
+			submitInfo.setSignalSemaphoreCount(static_cast<uint32_t>(signalSemaphores.size())).setPSignalSemaphores(signalSemaphores.data());
+			submitInfo.setCommandBufferCount(static_cast<uint32_t>(commandBuffers.size())).setPCommandBuffers(commandBuffers.data());
+			context->getGraphicsQueue().submit({ submitInfo }, nullptr);
 		}
 
-		asc::internal::Shader vertexShader(context->getDevice(), filename, flags);
+		{
+			const std::array<vk::Semaphore, 1> waitForSemaphores = { *context->getRenderFinishedSemaphore() };
+			const std::array<vk::SwapchainKHR, 1> swapchains = { *swapchain->getSwapchain() };
+
+			auto presentInfo = vk::PresentInfoKHR().setWaitSemaphoreCount(static_cast<uint32_t>(waitForSemaphores.size())).setPWaitSemaphores(waitForSemaphores.data());
+			presentInfo.setSwapchainCount(static_cast<uint32_t>(swapchains.size())).setPSwapchains(swapchains.data()).setPImageIndices(&imageIndex);
+			context->getPresentQueue().presentKHR(&presentInfo);
+		}
 	}
 }

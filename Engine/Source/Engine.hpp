@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Context.hpp"
+#include "Pipeline.hpp"
 #include "Swapchain.hpp"
 
 #ifdef ASC_BUILD_DLL
@@ -22,10 +22,12 @@ namespace asc
 	private:
 		std::unique_ptr<internal::Context> context;
 		std::unique_ptr<internal::Swapchain> swapchain;
+		std::unique_ptr<internal::Pipeline> pipeline;
 
 	public:
 		Engine(const ApplicationInfo& applicationInfo);
 
-		void loadShader(const std::string& filename, const ShaderType type);
+		//void loadShader(const std::string& filename, const ShaderType type);
+		void renderFrame();
 	};
 }

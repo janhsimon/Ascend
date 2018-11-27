@@ -6,6 +6,10 @@
 class Game
 {
 private:
+	static constexpr char APP_NAME[] = "Ascend Sandbox";
+	static constexpr short SCREEN_WIDTH = 1280;
+	static constexpr short SCREEN_HEIGHT = 720;
+
 	SDL_Window* window;
 
 public:
@@ -16,7 +20,7 @@ public:
 			throw std::runtime_error("Failed to initialize video subsystem, encountered error: " + std::string(SDL_GetError()));
 		}
 
-		window = SDL_CreateWindow("Ascend Test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_VULKAN);
+		window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_VULKAN);
 		if (!window)
 		{
 			throw std::runtime_error("Failed to create window, encountered error: " + std::string(SDL_GetError()));
@@ -34,8 +38,8 @@ public:
 			throw std::runtime_error("Failed to get instance extensions: " + std::string(SDL_GetError()));
 		}
 
-		auto appInfo = asc::ApplicationInfo().setName("Ascend Test").setVersion(1, 0, 0).setInstanceExtensions(instanceExtensions);
-		
+		auto appInfo = asc::ApplicationInfo().setName(APP_NAME).setVersion(1, 0, 0).setInstanceExtensions(instanceExtensions);
+
 		appInfo.createSurfaceLambda = [&](const VkInstance* instance) -> VkSurfaceKHR*
 		{
 			auto surface = new VkSurfaceKHR();
@@ -52,11 +56,13 @@ public:
 				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", message.c_str(), nullptr);
 			};
 		#endif
-		
+
 		auto engine = asc::Engine(appInfo);
 
+		/*
 		engine.loadShader("Shaders/Test.vert.spv", asc::ShaderType::Vertex);
 		engine.loadShader("Shaders/Test.frag.spv", asc::ShaderType::Fragment);
+		*/
 
 		SDL_Event event;
 		auto done = false;
@@ -76,7 +82,7 @@ public:
 				break;
 			}
 
-			// TODO: do something here...
+			engine.renderFrame();
 		}
 
 		SDL_Quit();

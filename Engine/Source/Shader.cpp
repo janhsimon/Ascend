@@ -6,7 +6,7 @@ namespace asc
 {
 	namespace internal
 	{
-		Shader::Shader(vk::Device* _device, const std::string& filename, vk::ShaderStageFlagBits _shaderStageFlags)
+		Shader::Shader(const vk::Device* _device, const std::string& filename, vk::ShaderStageFlagBits _shaderStageFlags)
 			: device(_device), shaderStageFlags(_shaderStageFlags)
 		{
 			std::ifstream file(filename, std::ios::binary);
@@ -42,6 +42,11 @@ namespace asc
 			};
 
 			shaderModule = std::unique_ptr<vk::ShaderModule, decltype(destroyShaderModule)>(newShaderModule, destroyShaderModule);
+		}
+
+		vk::PipelineShaderStageCreateInfo Shader::getPipelineShaderStageCreateInfo() const
+		{
+			return vk::PipelineShaderStageCreateInfo().setStage(shaderStageFlags).setModule(*shaderModule.get()).setPName(SHADER_PROGRAM_ENTRY_POINT);
 		}
 	}
 }

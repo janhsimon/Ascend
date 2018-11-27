@@ -1,15 +1,14 @@
-# Visual Studio stuff
-.vs/
-*.sln
-
 # Engine project
 Engine/*.vcxproj*
 Engine/Bin
 Engine/Temp
-
 
 # Sandbox project
 Sandbox/*.vcxproj*
 Sandbox/Bin/Ascend.dll
 Sandbox/Bin/Sandbox.*
 Sandbox/Temp
+
+# Visual Studio
+.vs/
+*.sln

@@ -9,7 +9,7 @@ namespace asc
 			constexpr auto WANTED_SURFACE_FORMAT = vk::Format::eB8G8R8A8Unorm;
 			constexpr auto WANTED_SURFACE_COLOR_SPACE = vk::ColorSpaceKHR::eSrgbNonlinear;
 
-			const auto availableSurfaceFormats = context->getPhysicalDevice()->getSurfaceFormatsKHR(*context->getSurface());
+			const auto availableSurfaceFormats = context->getPhysicalDevice().getSurfaceFormatsKHR(*context->getSurface());
 
 			if (availableSurfaceFormats.size() == 1 && availableSurfaceFormats[0].format == vk::Format::eUndefined)
 			// undefined as the only result means there are no preferences
@@ -40,7 +40,7 @@ namespace asc
 			presentMode = vk::PresentModeKHR::eFifo;
 			imageCount = 2;
 
-			const auto availablePresentModes = context->getPhysicalDevice()->getSurfacePresentModesKHR(*context->getSurface());
+			const auto availablePresentModes = context->getPhysicalDevice().getSurfacePresentModesKHR(*context->getSurface());
 			for (const auto& availablePresentMode : availablePresentModes)
 			{
 				if (presentMode == vk::PresentModeKHR::eMailbox)
@@ -55,7 +55,7 @@ namespace asc
 
 		void Swapchain::selectSwapExtent()
 		{
-			const auto surfaceCapabilities = context->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*context->getSurface());
+			const auto surfaceCapabilities = context->getPhysicalDevice().getSurfaceCapabilitiesKHR(*context->getSurface());
 			extent = surfaceCapabilities.currentExtent;
 		}
 
@@ -88,26 +88,70 @@ namespace asc
 			swapchain = std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)>(newSwapchain, destroySwapchain);
 		}
 
+		void Swapchain::createRenderPass()
+		{
+			auto attachmentDescription = vk::AttachmentDescription().setFormat(surfaceFormat);
+			attachmentDescription.setLoadOp(vk::AttachmentLoadOp::eClear).setStoreOp(vk::AttachmentStoreOp::eStore);
+			attachmentDescription.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare).setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+			attachmentDescription.setInitialLayout(vk::ImageLayout::eUndefined).setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+
+			auto attachmentReference = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+
+			auto subpassDescription = vk::SubpassDescription().setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+			subpassDescription.setColorAttachmentCount(1).setPColorAttachments(&attachmentReference);
+
+			auto subpassDependency = vk::SubpassDependency().setSrcSubpass(VK_SUBPASS_EXTERNAL).setDstSubpass(0);
+			subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput).setSrcAccessMask(vk::AccessFlags());
+			subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput).setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+
+			auto renderPassCreateInfo = vk::RenderPassCreateInfo();
+			renderPassCreateInfo.setAttachmentCount(1).setPAttachments(&attachmentDescription);
+			renderPassCreateInfo.setSubpassCount(1).setPSubpasses(&subpassDescription);
+			renderPassCreateInfo.setDependencyCount(1).setPDependencies(&subpassDependency);
+
+			auto newRenderPass = new vk::RenderPass(context->getDevice()->createRenderPass(renderPassCreateInfo));
+
+			destroyRenderPass = [&](vk::RenderPass* renderPass)
+			{
+				if (context && context->getDevice())
+				{
+					context->getDevice()->destroyRenderPass(*renderPass);
+				}
+			};
+
+			renderPass = std::unique_ptr<vk::RenderPass, decltype(destroyRenderPass)>(newRenderPass, destroyRenderPass);
+		}
+
 		void Swapchain::createImages()
 		{
 			images.clear();
 
 			const auto retrievedImages = context->getDevice()->getSwapchainImagesKHR(*swapchain);
 			images.reserve(retrievedImages.size());
+
 			for (const auto& image : retrievedImages)
 			{
-				images.emplace_back(context->getDevice(), image, surfaceFormat);
+				images.emplace_back(context, surfaceFormat, extent, renderPass.get(), image);
 			}
 		}
 
-		Swapchain::Swapchain(Context* _context)
+		Swapchain::Swapchain(const Context* _context)
 			: context(_context)
 		{
 			selectSurfaceFormat();
 			selectPresentMode();
 			selectSwapExtent();
 			createSwapchain();
+			createRenderPass();
 			createImages();
+		}
+
+		void Swapchain::recordImageCommandBuffers(const vk::Pipeline* pipeline)
+		{
+			for (const auto& image : images)
+			{
+				image.recordCommandBuffer(pipeline);
+			}
 		}
 	}
 }
