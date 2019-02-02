@@ -1,0 +1,36 @@
+﻿  SDLSandbox.cpp
+c:\users\check\documents\visual studio projects\ascend\engine\source\application.hpp(49): warning C4251: 'asc::Application::destroyInstance': class 'std::function<void (vk::Instance *)>' needs to have dll-interface to be used by clients of class 'asc::Application'
+  c:\users\check\documents\visual studio projects\ascend\engine\source\application.hpp(49): note: see declaration of 'std::function<void (vk::Instance *)>'
+c:\users\check\documents\visual studio projects\ascend\engine\source\application.hpp(50): warning C4251: 'asc::Application::instance': class 'std::unique_ptr<vk::Instance,std::function<void (vk::Instance *)>>' needs to have dll-interface to be used by clients of class 'asc::Application'
+  c:\users\check\documents\visual studio projects\ascend\engine\source\application.hpp(50): note: see declaration of 'std::unique_ptr<vk::Instance,std::function<void (vk::Instance *)>>'
+c:\users\check\documents\visual studio projects\ascend\engine\source\renderer.hpp(18): warning C4251: 'asc::Renderer::context': class 'std::unique_ptr<asc::internal::Context,std::default_delete<_Ty>>' needs to have dll-interface to be used by clients of class 'asc::Renderer'
+          with
+          [
+              _Ty=asc::internal::Context
+          ]
+  c:\users\check\documents\visual studio projects\ascend\engine\source\renderer.hpp(18): note: see declaration of 'std::unique_ptr<asc::internal::Context,std::default_delete<_Ty>>'
+          with
+          [
+              _Ty=asc::internal::Context
+          ]
+c:\users\check\documents\visual studio projects\ascend\engine\source\renderer.hpp(19): warning C4251: 'asc::Renderer::swapchain': class 'std::unique_ptr<asc::internal::Swapchain,std::default_delete<_Ty>>' needs to have dll-interface to be used by clients of class 'asc::Renderer'
+          with
+          [
+              _Ty=asc::internal::Swapchain
+          ]
+  c:\users\check\documents\visual studio projects\ascend\engine\source\renderer.hpp(19): note: see declaration of 'std::unique_ptr<asc::internal::Swapchain,std::default_delete<_Ty>>'
+          with
+          [
+              _Ty=asc::internal::Swapchain
+          ]
+c:\users\check\documents\visual studio projects\ascend\engine\source\renderer.hpp(20): warning C4251: 'asc::Renderer::pipeline': class 'std::unique_ptr<asc::internal::Pipeline,std::default_delete<_Ty>>' needs to have dll-interface to be used by clients of class 'asc::Renderer'
+          with
+          [
+              _Ty=asc::internal::Pipeline
+          ]
+  c:\users\check\documents\visual studio projects\ascend\engine\source\renderer.hpp(20): note: see declaration of 'std::unique_ptr<asc::internal::Pipeline,std::default_delete<_Ty>>'
+          with
+          [
+              _Ty=asc::internal::Pipeline
+          ]
+  SDL Sandbox.vcxproj -> C:\Users\check\Documents\Visual Studio Projects\Ascend\SDL Sandbox\Bin\SDL Sandbox.exe

@@ -1,9 +1,6 @@
 #pragma once
 
-#include "ApplicationInfo.hpp"
-
-#include <string>
-#include <vector>
+#include "Application.hpp"
 
 namespace asc
 {
@@ -12,20 +9,15 @@ namespace asc
 		class Context
 		{
 		private:
-			static constexpr uint32_t API_VERSION = VK_API_VERSION_1_0;
-			static constexpr char ENGINE_NAME[] = "Ascend";
-			static constexpr uint32_t ENGINE_VERSION = VK_MAKE_VERSION(1, 0, 0);
-			static constexpr char STANDARD_VALIDATION_LAYER_NAME[] = "VK_LAYER_LUNARG_standard_validation";
 			static constexpr char CREATE_DEBUG_MESSENGER_FUNCTION_NAME[] = "vkCreateDebugUtilsMessengerEXT";
 			static constexpr char DESTROY_DEBUG_MESSENGER_FUNCTION_NAME[] = "vkDestroyDebugUtilsMessengerEXT";
 
+			const vk::Instance* instance;
 			ApplicationInfo applicationInfo;
+
 			vk::PhysicalDevice physicalDevice;
 			uint32_t graphicsQueueFamilyIndex, presentQueueFamilyIndex;
 			vk::Queue graphicsQueue, presentQueue;
-
-			std::function<void(vk::Instance*)> destroyInstance;
-			std::unique_ptr<vk::Instance, decltype(destroyInstance)> instance;
 			
 			std::function<void(vk::DebugUtilsMessengerEXT*)> destroyDebugMessenger;
 			std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)> debugMessenger;
@@ -42,7 +34,6 @@ namespace asc
 			std::function<void(vk::Semaphore*)> destroySemaphore;
 			std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)> imageAvailableSemaphore, renderFinishedSemaphore;
 
-			void createInstance();
 			void createDebugMessenger();
 			void createSurface();
 			void selectPhysicalDevice();
@@ -53,9 +44,11 @@ namespace asc
 			void createSemaphores();
 
 		public:
-			Context(const asc::ApplicationInfo& _applicationInfo);
+			Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo);
 
-			ApplicationInfo& getApplicationInfo() { return applicationInfo; }
+			//ApplicationInfo& getApplicationInfo() { return applicationInfo; }
+			//vk::Instance* getInstance() const { return instance.get(); }
+			//const vk::SurfaceKHR* getSurface() const { return surface; }
 			vk::PhysicalDevice getPhysicalDevice() const { return physicalDevice; }
 			uint32_t getGraphicsQueueFamilyIndex() const { return graphicsQueueFamilyIndex; }
 			uint32_t getPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }

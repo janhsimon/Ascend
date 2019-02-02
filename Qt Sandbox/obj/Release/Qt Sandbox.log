@@ -1,0 +1,41 @@
+﻿  Moc'ing QtSandbox.h
+  Rcc'ing QtSandbox.qrc
+RCC : warning : No resources in 'Source/QtSandbox.qrc'.
+  
+  QtSandbox.cpp
+  main.cpp
+  moc_QtSandbox.cpp
+  qrc_QtSandbox.cpp
+  VulkanWindow.cpp
+e:\visual studio projects\ascend\engine\source\engine.hpp(23): warning C4251: 'asc::Engine::context': class 'std::unique_ptr<asc::internal::Context,std::default_delete<_Ty>>' needs to have dll-interface to be used by clients of class 'asc::Engine'
+          with
+          [
+              _Ty=asc::internal::Context
+          ]
+  e:\visual studio projects\ascend\engine\source\engine.hpp(23): note: see declaration of 'std::unique_ptr<asc::internal::Context,std::default_delete<_Ty>>'
+          with
+          [
+              _Ty=asc::internal::Context
+          ]
+e:\visual studio projects\ascend\engine\source\engine.hpp(24): warning C4251: 'asc::Engine::swapchain': class 'std::unique_ptr<asc::internal::Swapchain,std::default_delete<_Ty>>' needs to have dll-interface to be used by clients of class 'asc::Engine'
+          with
+          [
+              _Ty=asc::internal::Swapchain
+          ]
+  e:\visual studio projects\ascend\engine\source\engine.hpp(24): note: see declaration of 'std::unique_ptr<asc::internal::Swapchain,std::default_delete<_Ty>>'
+          with
+          [
+              _Ty=asc::internal::Swapchain
+          ]
+e:\visual studio projects\ascend\engine\source\engine.hpp(25): warning C4251: 'asc::Engine::pipeline': class 'std::unique_ptr<asc::internal::Pipeline,std::default_delete<_Ty>>' needs to have dll-interface to be used by clients of class 'asc::Engine'
+          with
+          [
+              _Ty=asc::internal::Pipeline
+          ]
+  e:\visual studio projects\ascend\engine\source\engine.hpp(25): note: see declaration of 'std::unique_ptr<asc::internal::Pipeline,std::default_delete<_Ty>>'
+          with
+          [
+              _Ty=asc::internal::Pipeline
+          ]
+  Generating Code...
+  Qt Sandbox.vcxproj -> E:\Visual Studio Projects\Ascend\Qt Sandbox\Bin\Qt Sandbox.exe

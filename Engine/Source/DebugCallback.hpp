@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ApplicationInfo.hpp"
+#include "Application.hpp"
 
 namespace asc
 {

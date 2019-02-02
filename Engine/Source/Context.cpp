@@ -7,37 +7,6 @@ namespace asc
 {
 	namespace internal
 	{
-		void Context::createInstance()
-		{
-			auto appInfo = vk::ApplicationInfo().setApiVersion(API_VERSION).setPEngineName(ENGINE_NAME).setEngineVersion(ENGINE_VERSION);
-			appInfo.setApplicationVersion(VK_MAKE_VERSION(applicationInfo.versionMajor, applicationInfo.versionMinor, applicationInfo.versionPatch));
-			appInfo.setPApplicationName(applicationInfo.name);
-
-			auto instanceCreateInfo = vk::InstanceCreateInfo().setPApplicationInfo(&appInfo);
-
-			const std::vector<const char*> layers = { STANDARD_VALIDATION_LAYER_NAME };
-			std::vector<const char*> extensions(applicationInfo.instanceExtensions);
-
-			if (applicationInfo.debugCallbackLambda)
-			{
-				instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(layers.size())).setPpEnabledLayerNames(layers.data());
-				extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			}
-
-			instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size())).setPpEnabledExtensionNames(extensions.data());
-			const auto newInstance = new vk::Instance(vk::createInstance(instanceCreateInfo));
-
-			destroyInstance = [](vk::Instance* instance)
-			{
-				if (instance)
-				{
-					instance->destroy();
-				}
-			};
-
-			instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(newInstance, destroyInstance);
-		}
-
 		void Context::createDebugMessenger()
 		{
 			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPUserData(&applicationInfo).setPfnUserCallback(debugCallback);
@@ -45,7 +14,7 @@ namespace asc
 			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
 			
 			VkDebugUtilsMessengerEXT cStyleDebugMessenger;
-			const auto cStyleInstance = static_cast<VkInstance>(*instance.get());
+			const auto cStyleInstance = static_cast<VkInstance>(*instance);
 			const auto cStyleCreateInfo = static_cast<VkDebugUtilsMessengerCreateInfoEXT>(debugMessengerCreateInfo);
 
 			// extension functions must be called through a function pointer
@@ -62,16 +31,16 @@ namespace asc
 				{
 					// extension functions must be called through a function pointer
 					auto destroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance->getProcAddr(DESTROY_DEBUG_MESSENGER_FUNCTION_NAME));
-					destroyDebugUtilsMessengerEXT(*instance.get(), *messenger, nullptr);
+					destroyDebugUtilsMessengerEXT(*instance, *messenger, nullptr);
 				}
 			};
 
 			debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(newDebugMessenger, destroyDebugMessenger);
 		}
-
+		
 		void Context::createSurface()
 		{
-			const auto cStyleInstance = static_cast<VkInstance>(*instance.get());
+			const auto cStyleInstance = static_cast<VkInstance>(*instance);
 			const auto appSurface = reinterpret_cast<vk::SurfaceKHR*>(applicationInfo.createSurfaceLambda(&cStyleInstance));
 
 			destroySurface = [&](vk::SurfaceKHR* surface)
@@ -128,7 +97,7 @@ namespace asc
 					selectedGraphicsQueueFamilyIndex = i;
 				}
 
-				if (physicalDevice.getSurfaceSupportKHR(i, *surface.get()))
+				if (physicalDevice.getSurfaceSupportKHR(i, *surface))
 				{
 					selectedPresentQueueFamilyIndex = i;
 				}
@@ -219,11 +188,14 @@ namespace asc
 			renderFinishedSemaphore = std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)>(newRenderFinishedSemaphore, destroySemaphore);
 		}
 
-		Context::Context(const asc::ApplicationInfo& _applicationInfo)
-			: applicationInfo(_applicationInfo)
+		Context::Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo)
+			: instance(_instance), applicationInfo(_applicationInfo)
 		{
-			createInstance();
-			
+			//instance = applicationInfo.instance;
+			//surface = applicationInfo.surface;
+
+			//createInstance();
+
 			if (applicationInfo.debugCallbackLambda)
 			{
 				createDebugMessenger();
