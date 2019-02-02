@@ -19,6 +19,21 @@ private:
 		temporaryVulkanInstance->create();
 		const auto instanceExtensions = temporaryVulkanInstance->extensions();
 		std::vector<const char*> output(instanceExtensions.begin(), instanceExtensions.end());
+
+		std::vector<const char*> output;
+		output.resize(instanceExtensions.size());
+		for (int i = 0; i < instanceExtensions.size(); ++i)
+		{
+			/*const auto t = instanceExtensions[i];
+			const auto u = t.toStdString();
+			const auto v = u.c_str();
+			*/
+
+			const auto u = instanceExtensions[i];
+			const auto v = u.constData();
+			output[i] = v;
+		}
+
 		delete temporaryVulkanInstance;
 		return output;
 	}
@@ -26,7 +41,9 @@ private:
 	void init()
 	{
 		auto applicationInfo = asc::ApplicationInfo().setName("Test").setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions());
-		
+		for (const auto& i : applicationInfo.instanceExtensions)
+			qDebug() << "\"" << i << "\"";
+
 		#ifdef DEBUG
 			applicationInfo.debugCallbackLambda = [](const std::string& message)
 			{
