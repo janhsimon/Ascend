@@ -4,15 +4,13 @@ Engine/Bin
 Engine/Temp
 
 # Qt Sandbox project
-QtSandbox/*.vcxproj*
-QtSandbox/Bin/*.dll
-QtSandbox/Bin/QtSandbox.*
+QtSandbox/QtSandbox.*
+QtSandbox/Bin
 QtSandbox/Temp
 
 # SDL Sandbox project
-SDLSandbox/*.vcxproj*
-SDLSandbox/Bin/*.dll
-SDLSandbox/Bin/SDLSandbox.*
+SDLSandbox/SDLSandbox.*
+SDLSandbox/Bin
 SDLSandbox/Temp
 
 # Visual Studio

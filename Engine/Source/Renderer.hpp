@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Application.hpp"
 #include "Pipeline.hpp"
 #include "Swapchain.hpp"
 

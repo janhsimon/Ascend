@@ -46,9 +46,6 @@ namespace asc
 		public:
 			Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo);
 
-			//ApplicationInfo& getApplicationInfo() { return applicationInfo; }
-			//vk::Instance* getInstance() const { return instance.get(); }
-			//const vk::SurfaceKHR* getSurface() const { return surface; }
 			vk::PhysicalDevice getPhysicalDevice() const { return physicalDevice; }
 			uint32_t getGraphicsQueueFamilyIndex() const { return graphicsQueueFamilyIndex; }
 			uint32_t getPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }

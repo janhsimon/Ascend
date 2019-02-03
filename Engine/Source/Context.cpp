@@ -191,11 +191,6 @@ namespace asc
 		Context::Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo)
 			: instance(_instance), applicationInfo(_applicationInfo)
 		{
-			//instance = applicationInfo.instance;
-			//surface = applicationInfo.surface;
-
-			//createInstance();
-
 			if (applicationInfo.debugCallbackLambda)
 			{
 				createDebugMessenger();
