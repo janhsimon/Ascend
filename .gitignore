@@ -3,11 +3,17 @@ Engine/*.vcxproj*
 Engine/Bin
 Engine/Temp
 
-# Sandbox project
-Sandbox/*.vcxproj*
-Sandbox/Bin/Ascend.dll
-Sandbox/Bin/Sandbox.*
-Sandbox/Temp
+# Qt Sandbox project
+QtSandbox/*.vcxproj*
+QtSandbox/Bin/*.dll
+QtSandbox/Bin/QtSandbox.*
+QtSandbox/Temp
+
+# SDL Sandbox project
+SDLSandbox/*.vcxproj*
+SDLSandbox/Bin/*.dll
+SDLSandbox/Bin/SDL Sandbox.*
+SDLSandbox/Temp
 
 # Visual Studio
 .vs/

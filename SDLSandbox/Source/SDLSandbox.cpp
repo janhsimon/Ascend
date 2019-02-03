@@ -7,8 +7,8 @@ class Game
 {
 private:
 	static constexpr char APP_NAME[] = "Ascend SDL Sandbox";
-	static constexpr auto SCREEN_WIDTH = 1280;
-	static constexpr auto SCREEN_HEIGHT = 720;
+	static constexpr auto WINDOW_WIDTH = 1280;
+	static constexpr auto WINDOW_HEIGHT = 720;
 
 	SDL_Window* window = nullptr;
 
@@ -19,7 +19,7 @@ private:
 			throw std::runtime_error("Failed to initialize video subsystem, encountered error: " + std::string(SDL_GetError()));
 		}
 
-		window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_VULKAN);
+		window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN);
 		if (!window)
 		{
 			throw std::runtime_error("Failed to create window, encountered error: " + std::string(SDL_GetError()));

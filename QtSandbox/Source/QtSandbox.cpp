@@ -9,44 +9,27 @@ class QtSandbox : public QWindow
 private:
 	static constexpr char APP_NAME[] = "Ascend QT Sandbox";
 
-	const asc::Application* application = nullptr;
-	const asc::Renderer* renderer = nullptr;
+	std::unique_ptr<asc::Application> application;
+	std::unique_ptr<asc::Renderer> renderer;
+	std::unique_ptr<QVulkanInstance> vulkanInstance;
 	bool isInitialized = false;
 
-	std::vector<const char*> queryInstanceExtensions()
+	std::vector<const char*> queryInstanceExtensions(QVulkanInstance& temporaryVulkanInstance)
 	{
-		const auto temporaryVulkanInstance = new QVulkanInstance();
-		temporaryVulkanInstance->create();
-		const auto instanceExtensions = temporaryVulkanInstance->extensions();
-		std::vector<const char*> output(instanceExtensions.begin(), instanceExtensions.end());
-
-		std::vector<const char*> output;
-		output.resize(instanceExtensions.size());
-		for (int i = 0; i < instanceExtensions.size(); ++i)
-		{
-			/*const auto t = instanceExtensions[i];
-			const auto u = t.toStdString();
-			const auto v = u.c_str();
-			*/
-
-			const auto u = instanceExtensions[i];
-			const auto v = u.constData();
-			output[i] = v;
-		}
-
-		delete temporaryVulkanInstance;
-		return output;
+		const auto instanceExtensions = temporaryVulkanInstance.extensions();
+		return std::vector<const char*>(instanceExtensions.begin(), instanceExtensions.end());
 	}
 
 	void init()
 	{
-		auto applicationInfo = asc::ApplicationInfo().setName("Test").setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions());
-		for (const auto& i : applicationInfo.instanceExtensions)
-			qDebug() << "\"" << i << "\"";
+		auto temporaryVulkanInstance = QVulkanInstance();
+		temporaryVulkanInstance.create();
+		auto applicationInfo = asc::ApplicationInfo().setName(APP_NAME).setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions(temporaryVulkanInstance));
 
 		#ifdef DEBUG
 			applicationInfo.debugCallbackLambda = [](const std::string& message)
 			{
+				qDebug() << message.c_str();
 				QMessageBox::critical(nullptr, "Error", message.c_str());
 			};
 		#endif
@@ -56,9 +39,9 @@ private:
 			return new VkSurfaceKHR(QVulkanInstance::surfaceForWindow(this));
 		};
 
-		application = new asc::Application(applicationInfo); // TODO: mem leak
+		application = std::make_unique<asc::Application>(applicationInfo);
 		
-		const auto vulkanInstance = new QVulkanInstance(); // TODO: mem leak?
+		vulkanInstance = std::make_unique<QVulkanInstance>();
 		vulkanInstance->setVkInstance(*application->getInstance());
 		
 		if (!vulkanInstance->create())
@@ -66,9 +49,9 @@ private:
 			throw std::runtime_error("Error: Failed to initialize Vulkan instance.");
 		}
 
-		setVulkanInstance(vulkanInstance);
+		setVulkanInstance(vulkanInstance.get());
 
-		renderer = new asc::Renderer(*application); // TODO: mem leak
+		renderer = std::make_unique<asc::Renderer>(*application);
 	}
 
 	void exposeEvent(QExposeEvent*) override
@@ -88,12 +71,16 @@ public:
 	}
 };
 
-struct MainWindow : public QMainWindow
+class MainWindow : public QMainWindow
 {
+private:
+	static constexpr auto WINDOW_WIDTH = 1280;
+	static constexpr auto WINDOW_HEIGHT = 720;
+
 public:
 	MainWindow()
 	{
-		resize(1280, 720);
+		resize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 		const auto rootLayout = new QHBoxLayout();
 		const auto rootWidget = new QWidget();
