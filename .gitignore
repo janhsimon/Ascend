@@ -12,7 +12,7 @@ QtSandbox/Temp
 # SDL Sandbox project
 SDLSandbox/*.vcxproj*
 SDLSandbox/Bin/*.dll
-SDLSandbox/Bin/SDL Sandbox.*
+SDLSandbox/Bin/SDLSandbox.*
 SDLSandbox/Temp
 
 # Visual Studio
