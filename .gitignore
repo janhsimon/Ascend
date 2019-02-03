@@ -1,15 +1,18 @@
 # Engine project
-Engine/*.vcxproj*
+Engine/*.*
+!Engine/Engine.lua
 Engine/Bin
 Engine/Temp
 
 # Qt Sandbox project
-QtSandbox/QtSandbox.*
+QtSandbox/*.*
+!QtSandbox/QtSandbox.lua
 QtSandbox/Bin
 QtSandbox/Temp
 
 # SDL Sandbox project
-SDLSandbox/SDLSandbox.*
+SDLSandbox/*.*
+!SDLSandbox/SDLSandbox.lua
 SDLSandbox/Bin
 SDLSandbox/Temp
 
