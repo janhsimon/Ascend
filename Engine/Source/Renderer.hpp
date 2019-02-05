@@ -20,6 +20,7 @@ namespace asc
 
 	public:
 		Renderer(const Application& application);
+		~Renderer();
 
 		//void loadShader(const std::string& filename, const ShaderType type);
 		void renderFrame() const;

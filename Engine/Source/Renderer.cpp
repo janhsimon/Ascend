@@ -12,6 +12,11 @@ namespace asc
 		swapchain->recordImageCommandBuffers(pipeline->getPipeline());
 	}
 
+	Renderer::~Renderer()
+	{
+		context->getDevice()->waitIdle();
+	}
+
 	/*
 	void Renderer::loadShader(const std::string& filename, const ShaderType type)
 	{
