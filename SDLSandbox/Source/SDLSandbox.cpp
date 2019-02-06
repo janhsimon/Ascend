@@ -68,7 +68,7 @@ public:
 		};
 
 		const auto application = asc::Application(applicationInfo);
-		const auto renderer = asc::Renderer(application);
+		auto renderer = asc::Renderer(application);
 
 		SDL_Event event;
 		auto done = false;

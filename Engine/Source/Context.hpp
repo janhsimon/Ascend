@@ -31,9 +31,6 @@ namespace asc
 			std::function<void(vk::CommandPool*)> destroyCommandPool;
 			std::unique_ptr<vk::CommandPool, decltype(destroyCommandPool)> commandPool;
 
-			std::function<void(vk::Semaphore*)> destroySemaphore;
-			std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)> imageAvailableSemaphore, renderFinishedSemaphore;
-
 			void createDebugMessenger();
 			void createSurface();
 			void selectPhysicalDevice();
@@ -41,7 +38,6 @@ namespace asc
 			void createDevice();
 			void retrieveQueues();
 			void createCommandPool();
-			void createSemaphores();
 
 		public:
 			Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo);
@@ -54,8 +50,6 @@ namespace asc
 			vk::SurfaceKHR* getSurface() const { return surface.get(); }
 			vk::Device* getDevice() const { return device.get(); }
 			vk::CommandPool* getCommandPool() const { return commandPool.get(); }
-			vk::Semaphore* getImageAvailableSemaphore() const { return imageAvailableSemaphore.get(); }
-			vk::Semaphore* getRenderFinishedSemaphore() const { return renderFinishedSemaphore.get(); }
 		};
 	}
 }
