@@ -27,10 +27,22 @@ private:
 		auto applicationInfo = asc::ApplicationInfo().setName(APP_NAME).setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions(temporaryVulkanInstance));
 
 		#ifdef DEBUG
-			applicationInfo.debugCallbackLambda = [](const std::string& message)
+			applicationInfo.logLambda = [](const std::string& message, const int severity)
 			{
 				qDebug() << message.c_str();
-				QMessageBox::critical(nullptr, "Error", message.c_str());
+
+				if (severity == 1)
+				{
+					QMessageBox::information(nullptr, "Warning", message.c_str());
+				}
+				else if (severity == 2)
+				{
+					QMessageBox::warning(nullptr, "Error", message.c_str());
+				}
+				else if(severity >= 3)
+				{
+					QMessageBox::critical(nullptr, "Fatal Error", message.c_str());
+				}
 			};
 		#endif
 
@@ -46,7 +58,7 @@ private:
 		
 		if (!vulkanInstance->create())
 		{
-			throw std::runtime_error("Error: Failed to initialize Vulkan instance.");
+			asc::Log("Failed to initialize Vulkan instance.", asc::LogSeverity::Fatal);
 		}
 
 		setVulkanInstance(vulkanInstance.get());

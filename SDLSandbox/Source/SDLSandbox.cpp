@@ -1,4 +1,5 @@
 #include <Ascend.hpp>
+#include <iostream>
 #include <SDL.h>
 #include <SDL_vulkan.h>
 #include <stdlib.h> // for EXIT_SUCCESS and EXIT_FAILURE
@@ -51,9 +52,22 @@ public:
 		auto applicationInfo = asc::ApplicationInfo().setName(APP_NAME).setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions());
 
 		#ifdef DEBUG
-			applicationInfo.debugCallbackLambda = [](const std::string& message)
+			applicationInfo.logLambda = [](const std::string& message, const int severity)
 			{
-				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", message.c_str(), nullptr);
+				std::cout << message << std::endl;
+
+				if (severity == 1)
+				{
+					SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_INFORMATION, "Warning", message.c_str(), nullptr);
+				}
+				else if (severity == 2)
+				{
+					SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_WARNING, "Error", message.c_str(), nullptr);
+				}
+				else if (severity >= 3)
+				{
+					SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Fatal Error", message.c_str(), nullptr);
+				}
 			};
 		#endif
 
@@ -68,7 +82,10 @@ public:
 		};
 
 		const auto application = asc::Application(applicationInfo);
+		asc::Log("Ascend application created", asc::LogSeverity::Warning);
+
 		auto renderer = asc::Renderer(application);
+		asc::Log("Ascend renderer created", asc::LogSeverity::Warning);
 
 		SDL_Event event;
 		auto done = false;

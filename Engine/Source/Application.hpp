@@ -12,7 +12,7 @@ namespace asc
 		const char* name = "My Ascend Application";
 		uint32_t versionMajor = 1, versionMinor = 0, versionPatch = 0;
 		std::vector<const char*> instanceExtensions = {};
-		std::function<void(const std::string&)> debugCallbackLambda = nullptr;
+		std::function<void(const std::string&, const int)> logLambda = nullptr; // TODO: use LogSeverity instead of int
 		std::function<VkSurfaceKHR*(const VkInstance*)> createSurfaceLambda = nullptr;
 
 		ApplicationInfo& setName(const char* name)

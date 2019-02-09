@@ -1,4 +1,5 @@
 #include "Frame.hpp"
+#include "Log.hpp"
 
 namespace asc
 {

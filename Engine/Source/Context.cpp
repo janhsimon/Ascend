@@ -1,5 +1,5 @@
 #include "Context.hpp"
-#include "DebugCallback.hpp"
+#include "Log.hpp"
 
 #include <optional>
 
@@ -7,11 +7,29 @@ namespace asc
 {
 	namespace internal
 	{
+		static VKAPI_ATTR VkBool32 VKAPI_CALL vulkanLogCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
+		{
+			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+			{
+				Log(callbackData->pMessage, LogSeverity::Error);
+			}
+			else if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+			{
+				Log(callbackData->pMessage, LogSeverity::Warning);
+			}
+			else
+			{
+				Log(callbackData->pMessage);
+			}
+			
+			return VK_FALSE;
+		}
+
 		void Context::createDebugMessenger()
 		{
-			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPUserData(&applicationInfo).setPfnUserCallback(debugCallback);
+			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPfnUserCallback(vulkanLogCallback);
 			debugMessengerCreateInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
+			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose);
 			
 			VkDebugUtilsMessengerEXT cStyleDebugMessenger;
 			const auto cStyleInstance = static_cast<VkInstance>(*instance);
@@ -173,7 +191,7 @@ namespace asc
 		Context::Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo)
 			: instance(_instance), applicationInfo(_applicationInfo)
 		{
-			if (applicationInfo.debugCallbackLambda)
+			if (applicationInfo.logLambda)
 			{
 				createDebugMessenger();
 			}
