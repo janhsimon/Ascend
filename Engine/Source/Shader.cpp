@@ -1,3 +1,4 @@
+#include "Log.hpp"
 #include "Shader.hpp"
 
 #include <fstream>
@@ -13,7 +14,7 @@ namespace asc
 
 			if (file.fail())
 			{
-				throw std::runtime_error("Failed to open shader file \"" + filename + "\".");
+				Log("Failed to open shader file \"" + filename + "\".", LogSeverity::Fatal);
 			}
 
 			const auto begin = file.tellg();
@@ -27,7 +28,7 @@ namespace asc
 
 			if (code.size() == 0)
 			{
-				throw std::runtime_error("Shader file \"" + filename + "\" is empty.");
+				Log("Shader file \"" + filename + "\" is empty.", LogSeverity::Fatal);
 			}
 
 			const auto shaderModuleCreateInfo = vk::ShaderModuleCreateInfo().setCodeSize(code.size()).setPCode(reinterpret_cast<const uint32_t*>(&code[0]));

@@ -27,26 +27,10 @@ private:
 		auto applicationInfo = asc::ApplicationInfo().setName(APP_NAME).setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions(temporaryVulkanInstance));
 
 		#ifdef DEBUG
-			applicationInfo.logLambda = [](const std::string& message, const int severity)
-			{
-				qDebug() << message.c_str();
-
-				if (severity == 1)
-				{
-					QMessageBox::information(nullptr, "Warning", message.c_str());
-				}
-				else if (severity == 2)
-				{
-					QMessageBox::warning(nullptr, "Error", message.c_str());
-				}
-				else if(severity >= 3)
-				{
-					QMessageBox::critical(nullptr, "Fatal Error", message.c_str());
-				}
-			};
+			applicationInfo.setDebugMode(true);
 		#endif
 
-		applicationInfo.createSurfaceLambda = [&](const VkInstance* instance) -> VkSurfaceKHR*
+		applicationInfo.createSurfaceLambda = [this](const VkInstance* instance) -> VkSurfaceKHR*
 		{
 			return new VkSurfaceKHR(QVulkanInstance::surfaceForWindow(this));
 		};
@@ -79,6 +63,27 @@ private:
 public:
 	QtSandbox()
 	{
+		const auto logLambda = [](const std::string& message, const asc::LogSeverity severity)
+		{
+			qDebug() << message.c_str();
+
+			if (severity == asc::LogSeverity::Warning)
+			{
+				QMessageBox::information(nullptr, "Warning", message.c_str());
+			}
+			else if (severity == asc::LogSeverity::Error)
+			{
+				QMessageBox::warning(nullptr, "Error", message.c_str());
+			}
+			else if (severity >= asc::LogSeverity::Fatal)
+			{
+				QMessageBox::critical(nullptr, "Fatal Error", message.c_str());
+				exit(1);
+			}
+		};
+
+		asc::SetLogLambda(logLambda);
+
 		setSurfaceType(QSurface::VulkanSurface);
 	}
 };
@@ -103,30 +108,9 @@ public:
 	}
 };
 
-struct MyApplication : public QApplication
-{
-	MyApplication::MyApplication(int& argc, char** argv) : QApplication(argc, argv) { }
-
-	bool MyApplication::notify(QObject* receiver, QEvent* event)
-	{
-		bool done = true;
-
-		try
-		{
-			done = QApplication::notify(receiver, event);
-		}
-		catch (const std::exception& error)
-		{
-			QMessageBox::critical(nullptr, "Error", error.what());
-		}
-	
-		return done;
-	}
-};
-
 int main(int argc, char *argv[])
 {
-	MyApplication a(argc, argv);
+	QApplication a(argc, argv);
 	MainWindow mainWindow;
 	mainWindow.show();
 	return a.exec();

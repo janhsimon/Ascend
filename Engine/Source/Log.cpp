@@ -4,19 +4,19 @@ namespace asc
 {
 	namespace internal
 	{
-		const ApplicationInfo* applicationInfo = nullptr;
+		std::function<void(const std::string&, const LogSeverity)> logLambda = nullptr;
+	}
 
-		void setLogApplicationInfo(const ApplicationInfo* _applicationInfo)
-		{
-			applicationInfo = _applicationInfo;
-		}
+	void SetLogLambda(std::function<void(const std::string&, const LogSeverity)> logLambda)
+	{
+		internal::logLambda = logLambda;
 	}
 
 	void Log(const std::string& message, const LogSeverity severity)
 	{
-		if (internal::applicationInfo)
+		if (internal::logLambda)
 		{
-			internal::applicationInfo->logLambda(message, severity);
+			internal::logLambda(message, severity);
 		}
 	}
 }

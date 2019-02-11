@@ -29,7 +29,7 @@ namespace asc
 		{
 			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPfnUserCallback(vulkanLogCallback);
 			debugMessengerCreateInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning | vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo | vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose);
+			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
 			
 			VkDebugUtilsMessengerEXT cStyleDebugMessenger;
 			const auto cStyleInstance = static_cast<VkInstance>(*instance);
@@ -39,7 +39,7 @@ namespace asc
 			const auto createDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(instance->getProcAddr(CREATE_DEBUG_MESSENGER_FUNCTION_NAME));
 			if (createDebugUtilsMessengerEXT(cStyleInstance, &cStyleCreateInfo, nullptr, &cStyleDebugMessenger) != VK_SUCCESS)
 			{
-				throw std::runtime_error("Failed to create debug messenger.");
+				Log("Failed to create debug messenger.", LogSeverity::Error);
 			}
 			const auto newDebugMessenger = new vk::DebugUtilsMessengerEXT(cStyleDebugMessenger);
 
@@ -78,7 +78,7 @@ namespace asc
 
 			if (physicalDevices.empty())
 			{
-				throw std::runtime_error("Failed to find suitable physical device.");
+				Log("Failed to find suitable physical device.", LogSeverity::Fatal);
 			}
 
 			for (const auto& physicalDevice : physicalDevices)
@@ -128,7 +128,7 @@ namespace asc
 				}
 			}
 
-			throw std::runtime_error("Physical device does not provide required queues.");
+			Log("Physical device does not provide required queues.", LogSeverity::Fatal);
 		}
 
 		void Context::createDevice()
@@ -191,7 +191,7 @@ namespace asc
 		Context::Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo)
 			: instance(_instance), applicationInfo(_applicationInfo)
 		{
-			if (applicationInfo.logLambda)
+			if (applicationInfo.debugMode)
 			{
 				createDebugMessenger();
 			}

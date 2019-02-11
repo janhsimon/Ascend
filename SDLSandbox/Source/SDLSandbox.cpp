@@ -2,7 +2,6 @@
 #include <iostream>
 #include <SDL.h>
 #include <SDL_vulkan.h>
-#include <stdlib.h> // for EXIT_SUCCESS and EXIT_FAILURE
 
 class Game
 {
@@ -17,13 +16,13 @@ private:
 	{
 		if (SDL_Init(SDL_INIT_VIDEO) != 0)
 		{
-			throw std::runtime_error("Failed to initialize video subsystem, encountered error: " + std::string(SDL_GetError()));
+			asc::Log("Failed to initialize video subsystem, encountered error: " + std::string(SDL_GetError()), asc::LogSeverity::Fatal);
 		}
 
 		window = SDL_CreateWindow(APP_NAME, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_VULKAN);
 		if (!window)
 		{
-			throw std::runtime_error("Failed to create window, encountered error: " + std::string(SDL_GetError()));
+			asc::Log("Failed to create window, encountered error: " + std::string(SDL_GetError()), asc::LogSeverity::Fatal);
 		}
 	}
 
@@ -32,13 +31,13 @@ private:
 		unsigned int instanceExtensionCount = 0;
 		if (!SDL_Vulkan_GetInstanceExtensions(window, &instanceExtensionCount, nullptr))
 		{
-			throw std::runtime_error("Failed to get instance extension count: " + std::string(SDL_GetError()));
+			asc::Log("Failed to get instance extension count: " + std::string(SDL_GetError()), asc::LogSeverity::Fatal);
 		}
 
 		std::vector<const char*> instanceExtensions(instanceExtensionCount);
 		if (!SDL_Vulkan_GetInstanceExtensions(window, &instanceExtensionCount, instanceExtensions.data()))
 		{
-			throw std::runtime_error("Failed to get instance extensions: " + std::string(SDL_GetError()));
+			asc::Log("Failed to get instance extensions: " + std::string(SDL_GetError()), asc::LogSeverity::Fatal);
 		}
 
 		return instanceExtensions;
@@ -47,28 +46,34 @@ private:
 public:
 	Game()
 	{
+		const auto logLambda = [](const std::string& message, const asc::LogSeverity severity)
+		{
+			std::cout << message << std::endl;
+
+			if (severity == asc::LogSeverity::Warning)
+			{
+				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_INFORMATION, "Warning", message.c_str(), nullptr);
+			}
+			else if (severity == asc::LogSeverity::Error)
+			{
+				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_WARNING, "Error", message.c_str(), nullptr);
+			}
+			else if (severity >= asc::LogSeverity::Fatal)
+			{
+				SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Fatal Error", message.c_str(), nullptr);
+				SDL_Quit();
+				exit(1);
+			}
+		};
+
+		asc::SetLogLambda(logLambda);
+
 		createWindow();
 
 		auto applicationInfo = asc::ApplicationInfo().setName(APP_NAME).setVersion(1, 0, 0).setInstanceExtensions(queryInstanceExtensions());
 
 		#ifdef DEBUG
-			applicationInfo.logLambda = [](const std::string& message, const int severity)
-			{
-				std::cout << message << std::endl;
-
-				if (severity == 1)
-				{
-					SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_INFORMATION, "Warning", message.c_str(), nullptr);
-				}
-				else if (severity == 2)
-				{
-					SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_WARNING, "Error", message.c_str(), nullptr);
-				}
-				else if (severity >= 3)
-				{
-					SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Fatal Error", message.c_str(), nullptr);
-				}
-			};
+			applicationInfo.setDebugMode(true);
 		#endif
 
 		applicationInfo.createSurfaceLambda = [&](const VkInstance* instance) -> VkSurfaceKHR*
@@ -76,16 +81,13 @@ public:
 			auto surface = new VkSurfaceKHR();
 			if (!SDL_Vulkan_CreateSurface(window, *instance, surface))
 			{
-				throw std::runtime_error("Failed to create window surface.");
+				asc::Log("Failed to create window surface.", asc::LogSeverity::Fatal);
 			}
 			return surface;
 		};
 
 		const auto application = asc::Application(applicationInfo);
-		asc::Log("Ascend application created", asc::LogSeverity::Warning);
-
 		auto renderer = asc::Renderer(application);
-		asc::Log("Ascend renderer created", asc::LogSeverity::Warning);
 
 		SDL_Event event;
 		auto done = false;
@@ -114,15 +116,6 @@ public:
 
 int main(int argc, char** argv)
 {
-	try
-	{
-		Game game;
-	}
-	catch (const std::exception& error)
-	{
-		SDL_ShowSimpleMessageBox(SDL_MessageBoxFlags::SDL_MESSAGEBOX_ERROR, "Error", error.what(), nullptr);
-		return EXIT_FAILURE;
-	}
-
-	return EXIT_SUCCESS;
+	Game game;
+	return 0;
 }
