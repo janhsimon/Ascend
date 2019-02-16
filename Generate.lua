@@ -6,9 +6,9 @@ vulkan = "C:/VulkanSDK/1.1.97.0"
 require "External/premake-qt/qt"
 
 workspace "Ascend"
-	architecture "x64"
-	configurations { "Debug", "Release" }
-	startproject "QtSandbox"
+  architecture "x64"
+  configurations { "Debug", "Release" }
+  startproject "QtSandbox"
 
 include "Engine/Engine.lua"
 include "QtSandbox/QtSandbox.lua"
