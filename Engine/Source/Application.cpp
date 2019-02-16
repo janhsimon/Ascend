@@ -1,37 +1,37 @@
-#include "Application.hpp"
-#include "Log.hpp"
+#include "../Include/Ascend.hpp"
 
 namespace asc
 {
-	Application::Application(const ApplicationInfo& _applicationInfo) :
-		applicationInfo(_applicationInfo)
-	{
-		auto vulkanInfo = vk::ApplicationInfo().setApiVersion(API_VERSION).setPEngineName(ENGINE_NAME).setEngineVersion(ENGINE_VERSION);
-		vulkanInfo.setApplicationVersion(VK_MAKE_VERSION(applicationInfo.versionMajor, applicationInfo.versionMinor, applicationInfo.versionPatch));
-		vulkanInfo.setPApplicationName(applicationInfo.name);
+  Application::Application(const ApplicationInfo& applicationInfo)
+  {
+    this->applicationInfo = std::make_unique<ApplicationInfo>(applicationInfo);
 
-		auto instanceCreateInfo = vk::InstanceCreateInfo().setPApplicationInfo(&vulkanInfo);
+    auto vulkanInfo = vk::ApplicationInfo().setApiVersion(API_VERSION).setPEngineName(ENGINE_NAME).setEngineVersion(ENGINE_VERSION);
+    vulkanInfo.setApplicationVersion(VK_MAKE_VERSION(applicationInfo.versionMajor, applicationInfo.versionMinor, applicationInfo.versionPatch));
+    vulkanInfo.setPApplicationName(applicationInfo.name);
 
-		const std::vector<const char*> layers = { STANDARD_VALIDATION_LAYER_NAME };
-		std::vector<const char*> extensions(applicationInfo.instanceExtensions);
+    auto instanceCreateInfo = vk::InstanceCreateInfo().setPApplicationInfo(&vulkanInfo);
 
-		if (applicationInfo.debugMode)
-		{
-			instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(layers.size())).setPpEnabledLayerNames(layers.data());
-			extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-		}
+    const std::vector<const char*> layers = { STANDARD_VALIDATION_LAYER_NAME };
+    std::vector<const char*> extensions(applicationInfo.instanceExtensions);
 
-		instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size())).setPpEnabledExtensionNames(extensions.data());
-		const auto newInstance = new vk::Instance(vk::createInstance(instanceCreateInfo));
+    if (applicationInfo.debugMode)
+    {
+      instanceCreateInfo.setEnabledLayerCount(static_cast<uint32_t>(layers.size())).setPpEnabledLayerNames(layers.data());
+      extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
 
-		destroyInstance = [](vk::Instance* instance)
-		{
-			if (instance)
-			{
-				instance->destroy();
-			}
-		};
+    instanceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(extensions.size())).setPpEnabledExtensionNames(extensions.data());
+    const auto newInstance = new vk::Instance(vk::createInstance(instanceCreateInfo));
 
-		instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(newInstance, destroyInstance);
-	}
+    destroyInstance = [](vk::Instance* instance)
+    {
+      if (instance)
+      {
+        instance->destroy();
+      }
+    };
+
+    instance = std::unique_ptr<vk::Instance, decltype(destroyInstance)>(newInstance, destroyInstance);
+  }
 }

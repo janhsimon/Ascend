@@ -1,19 +1,24 @@
 project "SDLSandbox"
 	kind "WindowedApp"
 	language "C++"
-	files { "Source/**.*", }
+	files { "SDLSandbox.lua", "Source/**.*", }
 	objdir "Temp"
 	targetdir "Bin"
 	debugdir "Bin"
 
-	includedirs { "../Engine/Include", (sdl .. "/include"), (vulkan .. "/Include") }
+	includedirs
+  {
+    "%{wks.location}/Engine/Include",
+    "%{wks.location}/External",
+    (sdl .. "/include"),
+    (vulkan .. "/Include")
+  }
 
 	libdirs { (sdl .. "/lib/x64"), (vulkan .. "/Lib") }
 	links { "Engine", "SDL2", "SDL2main", "vulkan-1" }
 
 	postbuildcommands
 	{
-		"{COPY} ../Engine/Bin/Ascend.dll Bin/",
 		("{COPY} " .. sdl .. "/lib/x64/SDL2.dll Bin/")
 	}
 

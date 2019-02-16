@@ -1,19 +1,23 @@
 project "QtSandbox"
 	kind "ConsoleApp" --"WindowedApp"
 	language "C++"
-	files { "Source/**.*" }
+	files { "QtSandbox.lua", "Source/**.*" }
 	objdir "Temp"
 	targetdir "Bin"
 	debugdir "Bin"
 
-	includedirs { "../Engine/Include", (vulkan .. "/Include") }
+	includedirs
+  {
+    "%{wks.location}/Engine/Include",
+    "%{wks.location}/External",
+    (vulkan .. "/Include")
+  }
 
 	libdirs { (vulkan .. "/Lib") }
 	links { "Engine", "vulkan-1" } -- qtmaind.lib should allow us to make a WindowedApp but causes linker errors
 
 	postbuildcommands
 	{
-		"{COPY} ../Engine/Bin/Ascend.dll Bin/",
 		("{COPY} " .. qt .. "/bin/Qt5Core.dll Bin/"),
 		("{COPY} " .. qt .. "/bin/Qt5Gui.dll Bin/"),
 		("{COPY} " .. qt .. "/bin/Qt5Widgets.dll Bin/")

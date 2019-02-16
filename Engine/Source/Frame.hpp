@@ -1,32 +1,35 @@
 #pragma once
 
-#include <functional>
-#include <vulkan/vulkan.hpp>
+#include "Swapchain.hpp"
 
 namespace asc
 {
-	namespace internal
-	{
-		class Frame
-		{
-		private:
-			const vk::Device* device;
+  namespace internal
+  {
+    class Frame
+    {
+    public:
+      Frame(const Context* context, const Swapchain* swapchain);
 
-			std::function<void(vk::Semaphore*)> destroySemaphore;
-			std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)> imageAvailableSemaphore, renderFinishedSemaphore;
+      void renderAndPresent() const;
 
-			std::function<void(vk::Fence*)> destroyFence;
-			std::unique_ptr<vk::Fence, decltype(destroyFence)> fence;
+    private:
+      const Context* context;
+      const vk::Device* device;
+      const Swapchain* swapchain;
 
-			void createSemaphores();
-			void createFence();
+      std::function<void(vk::Semaphore*)> destroySemaphore;
+      std::unique_ptr<vk::Semaphore, decltype(destroySemaphore)> imageAvailableSemaphore, renderFinishedSemaphore;
 
-		public:
-			Frame(const vk::Device* _device);
+      std::function<void(vk::Fence*)> destroyFence;
+      std::unique_ptr<vk::Fence, decltype(destroyFence)> fence;
 
-			vk::Semaphore* getImageAvailableSemaphore() const { return imageAvailableSemaphore.get(); }
-			vk::Semaphore* getRenderFinishedSemaphore() const { return renderFinishedSemaphore.get(); }
-			vk::Fence* getFence() const { return fence.get(); }
-		};
-	}
+      void createSemaphores();
+      void createFence();
+
+      uint32_t getNextSwapchainImageIndexWhenReady() const;
+      void render(const uint32_t swapchainImageIndex) const;
+      void present(const uint32_t swapchainImageIndex) const;
+    };
+  }
 }

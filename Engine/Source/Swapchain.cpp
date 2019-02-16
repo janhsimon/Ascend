@@ -2,156 +2,156 @@
 
 namespace asc
 {
-	namespace internal
-	{
-		void Swapchain::selectSurfaceFormat()
-		{
-			constexpr auto WANTED_SURFACE_FORMAT = vk::Format::eB8G8R8A8Unorm;
-			constexpr auto WANTED_SURFACE_COLOR_SPACE = vk::ColorSpaceKHR::eSrgbNonlinear;
+  namespace internal
+  {
+    Swapchain::Swapchain(const Context* context_) :
+      context(context_)
+    {
+      selectSurfaceFormat();
+      selectPresentMode();
+      selectSwapExtent();
+      createSwapchain();
+      createRenderPass();
+      createImages();
+    }
 
-			const auto availableSurfaceFormats = context->getPhysicalDevice().getSurfaceFormatsKHR(*context->getSurface());
+    void Swapchain::recordImageCommandBuffers(const vk::Pipeline* pipeline, const VertexBuffer* vertexBuffer)
+    {
+      for (const auto& image : images)
+      {
+        image.recordCommandBuffer(pipeline, vertexBuffer);
+      }
+    }
 
-			if (availableSurfaceFormats.size() == 1 && availableSurfaceFormats[0].format == vk::Format::eUndefined)
-			// undefined as the only result means there are no preferences
-			{
-				surfaceFormat = WANTED_SURFACE_FORMAT;
-				surfaceColorSpace = WANTED_SURFACE_COLOR_SPACE;
-				return;
-			}
+    void Swapchain::selectSurfaceFormat()
+    {
+      constexpr auto WANTED_SURFACE_FORMAT = vk::Format::eB8G8R8A8Unorm;
+      constexpr auto WANTED_SURFACE_COLOR_SPACE = vk::ColorSpaceKHR::eSrgbNonlinear;
 
-			surfaceFormat = availableSurfaceFormats[0].format;
-			surfaceColorSpace = availableSurfaceFormats[0].colorSpace;
+      const auto availableSurfaceFormats = context->getPhysicalDevice().getSurfaceFormatsKHR(*context->getSurface());
 
-			for (uint32_t i = 1; i < availableSurfaceFormats.size(); ++i)
-			{
-				const auto availableSurfaceFormat = availableSurfaceFormats[i];
-				if (availableSurfaceFormat.format == WANTED_SURFACE_FORMAT && availableSurfaceFormat.colorSpace == WANTED_SURFACE_COLOR_SPACE)
-				{
-					surfaceFormat = WANTED_SURFACE_FORMAT;
-					surfaceColorSpace = WANTED_SURFACE_COLOR_SPACE;
-					return;
-				}
-			}
-		}
+      if (availableSurfaceFormats.size() == 1 && availableSurfaceFormats[0].format == vk::Format::eUndefined)
+      // undefined as the only result means there are no preferences
+      {
+        surfaceFormat = WANTED_SURFACE_FORMAT;
+        surfaceColorSpace = WANTED_SURFACE_COLOR_SPACE;
+        return;
+      }
 
-		void Swapchain::selectPresentMode()
-		{
-			// fifo is guaranteed to be available and requires 2 images in the swapchain
-			presentMode = vk::PresentModeKHR::eFifo;
-			imageCount = 2;
+      surfaceFormat = availableSurfaceFormats[0].format;
+      surfaceColorSpace = availableSurfaceFormats[0].colorSpace;
 
-			const auto availablePresentModes = context->getPhysicalDevice().getSurfacePresentModesKHR(*context->getSurface());
-			for (const auto& availablePresentMode : availablePresentModes)
-			{
-				if (presentMode == vk::PresentModeKHR::eMailbox)
-				// prefer mailbox for triple buffering and add an extra swapchain image
-				{
-					presentMode = availablePresentMode;
-					imageCount = 3;
-					return;
-				}
-			}
-		}
+      for (uint32_t i = 1; i < availableSurfaceFormats.size(); ++i)
+      {
+        const auto availableSurfaceFormat = availableSurfaceFormats[i];
+        if (availableSurfaceFormat.format == WANTED_SURFACE_FORMAT && availableSurfaceFormat.colorSpace == WANTED_SURFACE_COLOR_SPACE)
+        {
+          surfaceFormat = WANTED_SURFACE_FORMAT;
+          surfaceColorSpace = WANTED_SURFACE_COLOR_SPACE;
+          return;
+        }
+      }
+    }
 
-		void Swapchain::selectSwapExtent()
-		{
-			const auto surfaceCapabilities = context->getPhysicalDevice().getSurfaceCapabilitiesKHR(*context->getSurface());
-			extent = surfaceCapabilities.currentExtent;
-		}
+    void Swapchain::selectPresentMode()
+    {
+      // fifo is guaranteed to be available and requires 2 images in the swapchain
+      presentMode = vk::PresentModeKHR::eFifo;
+      imageCount = 2;
 
-		void Swapchain::createSwapchain()
-		{
-			auto swapchainCreateInfo = vk::SwapchainCreateInfoKHR().setSurface(*context->getSurface()).setImageFormat(surfaceFormat).setImageColorSpace(surfaceColorSpace);
-			swapchainCreateInfo.setPresentMode(presentMode).setMinImageCount(imageCount).setImageExtent(extent);
-			swapchainCreateInfo.setImageArrayLayers(1).setClipped(true).setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
+      const auto availablePresentModes = context->getPhysicalDevice().getSurfacePresentModesKHR(*context->getSurface());
+      for (const auto& availablePresentMode : availablePresentModes)
+      {
+        if (presentMode == vk::PresentModeKHR::eMailbox)
+        // prefer mailbox for triple buffering and add an extra swapchain image
+        {
+          presentMode = availablePresentMode;
+          imageCount = 3;
+          return;
+        }
+      }
+    }
 
-			const auto graphicsQueueFamilyIndex = context->getGraphicsQueueFamilyIndex();
-			const auto presentQueueFamilyIndex = context->getPresentQueueFamilyIndex();
+    void Swapchain::selectSwapExtent()
+    {
+      const auto surfaceCapabilities = context->getPhysicalDevice().getSurfaceCapabilitiesKHR(*context->getSurface());
+      extent = surfaceCapabilities.currentExtent;
+    }
 
-			if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
-			{
-				const std::vector<uint32_t> queueFamilyIndices = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
-				swapchainCreateInfo.setQueueFamilyIndexCount(static_cast<uint32_t>(queueFamilyIndices.size())).setPQueueFamilyIndices(queueFamilyIndices.data());
-				swapchainCreateInfo.setImageSharingMode(vk::SharingMode::eConcurrent);
-			}
+    void Swapchain::createSwapchain()
+    {
+      auto swapchainCreateInfo = vk::SwapchainCreateInfoKHR().setSurface(*context->getSurface()).setImageFormat(surfaceFormat).setImageColorSpace(surfaceColorSpace);
+      swapchainCreateInfo.setPresentMode(presentMode).setMinImageCount(imageCount).setImageExtent(extent);
+      swapchainCreateInfo.setImageArrayLayers(1).setClipped(true).setImageUsage(vk::ImageUsageFlagBits::eColorAttachment);
 
-			const auto newSwapchain = new vk::SwapchainKHR(context->getDevice()->createSwapchainKHR(swapchainCreateInfo));
+      const auto graphicsQueueFamilyIndex = context->getGraphicsQueueFamilyIndex();
+      const auto presentQueueFamilyIndex = context->getPresentQueueFamilyIndex();
 
-			destroySwapchain = [&](vk::SwapchainKHR* swapchain)
-			{
-				if (context && context->getDevice())
-				{
-					context->getDevice()->destroySwapchainKHR(*swapchain);
-				}
-			};
+      if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
+      {
+        const std::vector<uint32_t> queueFamilyIndices = { graphicsQueueFamilyIndex, presentQueueFamilyIndex };
+        swapchainCreateInfo.setQueueFamilyIndexCount(static_cast<uint32_t>(queueFamilyIndices.size())).setPQueueFamilyIndices(queueFamilyIndices.data());
+        swapchainCreateInfo.setImageSharingMode(vk::SharingMode::eConcurrent);
+      }
 
-			swapchain = std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)>(newSwapchain, destroySwapchain);
-		}
+      const auto newSwapchain = new vk::SwapchainKHR(context->getDevice()->createSwapchainKHR(swapchainCreateInfo));
 
-		void Swapchain::createRenderPass()
-		{
-			auto attachmentDescription = vk::AttachmentDescription().setFormat(surfaceFormat);
-			attachmentDescription.setLoadOp(vk::AttachmentLoadOp::eClear).setStoreOp(vk::AttachmentStoreOp::eStore);
-			attachmentDescription.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare).setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
-			attachmentDescription.setInitialLayout(vk::ImageLayout::eUndefined).setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
+      destroySwapchain = [&](vk::SwapchainKHR* swapchain)
+      {
+        if (context && context->getDevice())
+        {
+          context->getDevice()->destroySwapchainKHR(*swapchain);
+        }
+      };
 
-			auto attachmentReference = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
+      swapchain = std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)>(newSwapchain, destroySwapchain);
+    }
 
-			auto subpassDescription = vk::SubpassDescription().setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
-			subpassDescription.setColorAttachmentCount(1).setPColorAttachments(&attachmentReference);
+    void Swapchain::createRenderPass()
+    {
+      auto attachmentDescription = vk::AttachmentDescription().setFormat(surfaceFormat);
+      attachmentDescription.setLoadOp(vk::AttachmentLoadOp::eClear).setStoreOp(vk::AttachmentStoreOp::eStore);
+      attachmentDescription.setStencilLoadOp(vk::AttachmentLoadOp::eDontCare).setStencilStoreOp(vk::AttachmentStoreOp::eDontCare);
+      attachmentDescription.setInitialLayout(vk::ImageLayout::eUndefined).setFinalLayout(vk::ImageLayout::ePresentSrcKHR);
 
-			auto subpassDependency = vk::SubpassDependency().setSrcSubpass(VK_SUBPASS_EXTERNAL).setDstSubpass(0);
-			subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput).setSrcAccessMask(vk::AccessFlags());
-			subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput).setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+      auto attachmentReference = vk::AttachmentReference().setAttachment(0).setLayout(vk::ImageLayout::eColorAttachmentOptimal);
 
-			auto renderPassCreateInfo = vk::RenderPassCreateInfo();
-			renderPassCreateInfo.setAttachmentCount(1).setPAttachments(&attachmentDescription);
-			renderPassCreateInfo.setSubpassCount(1).setPSubpasses(&subpassDescription);
-			renderPassCreateInfo.setDependencyCount(1).setPDependencies(&subpassDependency);
+      auto subpassDescription = vk::SubpassDescription().setPipelineBindPoint(vk::PipelineBindPoint::eGraphics);
+      subpassDescription.setColorAttachmentCount(1).setPColorAttachments(&attachmentReference);
 
-			auto newRenderPass = new vk::RenderPass(context->getDevice()->createRenderPass(renderPassCreateInfo));
+      auto subpassDependency = vk::SubpassDependency().setSrcSubpass(VK_SUBPASS_EXTERNAL).setDstSubpass(0);
+      subpassDependency.setSrcStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput).setSrcAccessMask(vk::AccessFlags());
+      subpassDependency.setDstStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput).setDstAccessMask(vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
 
-			destroyRenderPass = [&](vk::RenderPass* renderPass)
-			{
-				if (context && context->getDevice())
-				{
-					context->getDevice()->destroyRenderPass(*renderPass);
-				}
-			};
+      auto renderPassCreateInfo = vk::RenderPassCreateInfo();
+      renderPassCreateInfo.setAttachmentCount(1).setPAttachments(&attachmentDescription);
+      renderPassCreateInfo.setSubpassCount(1).setPSubpasses(&subpassDescription);
+      renderPassCreateInfo.setDependencyCount(1).setPDependencies(&subpassDependency);
 
-			renderPass = std::unique_ptr<vk::RenderPass, decltype(destroyRenderPass)>(newRenderPass, destroyRenderPass);
-		}
+      auto newRenderPass = new vk::RenderPass(context->getDevice()->createRenderPass(renderPassCreateInfo));
 
-		void Swapchain::createImages()
-		{
-			images.clear();
+      destroyRenderPass = [&](vk::RenderPass* renderPass)
+      {
+        if (context && context->getDevice())
+        {
+          context->getDevice()->destroyRenderPass(*renderPass);
+        }
+      };
 
-			const auto retrievedImages = context->getDevice()->getSwapchainImagesKHR(*swapchain);
-			images.reserve(retrievedImages.size());
+      renderPass = std::unique_ptr<vk::RenderPass, decltype(destroyRenderPass)>(newRenderPass, destroyRenderPass);
+    }
 
-			for (const auto& image : retrievedImages)
-			{
-				images.emplace_back(context, surfaceFormat, extent, renderPass.get(), image);
-			}
-		}
+    void Swapchain::createImages()
+    {
+      images.clear();
 
-		Swapchain::Swapchain(const Context* _context)
-			: context(_context)
-		{
-			selectSurfaceFormat();
-			selectPresentMode();
-			selectSwapExtent();
-			createSwapchain();
-			createRenderPass();
-			createImages();
-		}
+      const auto retrievedImages = context->getDevice()->getSwapchainImagesKHR(*swapchain);
+      images.reserve(retrievedImages.size());
 
-		void Swapchain::recordImageCommandBuffers(const vk::Pipeline* pipeline)
-		{
-			for (const auto& image : images)
-			{
-				image.recordCommandBuffer(pipeline);
-			}
-		}
-	}
+      for (const auto& image : retrievedImages)
+      {
+        images.emplace_back(context, surfaceFormat, extent, renderPass.get(), image);
+      }
+    }
+  }
 }

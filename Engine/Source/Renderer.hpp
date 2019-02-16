@@ -6,28 +6,31 @@
 
 namespace asc
 {
-	enum ShaderType
-	{
-		Vertex,
-		Fragment
-	};
+  /*
+  enum ShaderType
+  {
+    Vertex,
+    Fragment
+  };
+  */
 
-	class ASC_EXPORT Renderer
-	{
-	private:
-		static constexpr uint16_t MAX_FRAMES_IN_PIPELINE = 2;
+  class Renderer
+  {
+  public:
+    Renderer(const Application& application);
+    ~Renderer();
 
-		std::unique_ptr<internal::Context> context;
-		std::vector<std::unique_ptr<internal::Frame>> frames;
-		uint16_t currentFrameIndex;
-		std::unique_ptr<internal::Swapchain> swapchain;
-		std::unique_ptr<internal::Pipeline> pipeline;
+    //void loadShader(const std::string& filename, const ShaderType type);
+    void render();
 
-	public:
-		Renderer(const Application& application);
-		~Renderer();
+  private:
+    static constexpr uint16_t MAX_FRAMES_IN_PIPELINE = 2;
 
-		//void loadShader(const std::string& filename, const ShaderType type);
-		void renderFrame();
-	};
+    std::unique_ptr<internal::Context> context;
+    std::vector<std::unique_ptr<internal::Frame>> frames;
+    uint16_t currentFrameIndex;
+    std::unique_ptr<internal::Swapchain> swapchain;
+    std::unique_ptr<internal::Pipeline> pipeline;
+    std::unique_ptr<internal::VertexBuffer> vertexBuffer;
+  };
 }

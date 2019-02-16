@@ -4,28 +4,28 @@
 
 namespace asc
 {
-	namespace internal
-	{
-		class Pipeline
-		{
-		private:
-			const vk::Device* device;
-			vk::Extent2D swapchainExtent;
-			const vk::RenderPass* swapchainRenderPass;
+  namespace internal
+  {
+    class Pipeline
+    {
+    public:
+      Pipeline(const vk::Device* device, const vk::Extent2D swapchainExtent, const vk::RenderPass* swapchainRenderPass);
 
-			std::function<void(vk::PipelineLayout*)> destroyPipelineLayout;
-			std::unique_ptr<vk::PipelineLayout, decltype(destroyPipelineLayout)> pipelineLayout;
+      vk::Pipeline* getPipeline() const { return pipeline.get(); };
 
-			std::function<void(vk::Pipeline*)> destroyPipeline;
-			std::unique_ptr<vk::Pipeline, decltype(destroyPipeline)> pipeline;
+    private:
+      const vk::Device* device;
+      vk::Extent2D swapchainExtent;
+      const vk::RenderPass* swapchainRenderPass;
 
-			void createPipelineLayout();
-			void createPipeline();
+      std::function<void(vk::PipelineLayout*)> destroyPipelineLayout;
+      std::unique_ptr<vk::PipelineLayout, decltype(destroyPipelineLayout)> pipelineLayout;
 
-		public:
-			Pipeline(const vk::Device* _device, vk::Extent2D _swapchainExtent, const vk::RenderPass* _swapchainRenderPass);
+      std::function<void(vk::Pipeline*)> destroyPipeline;
+      std::unique_ptr<vk::Pipeline, decltype(destroyPipeline)> pipeline;
 
-			vk::Pipeline* getPipeline() const { return pipeline.get(); };
-		};
-	}
+      void createPipelineLayout();
+      void createPipeline();
+    };
+  }
 }

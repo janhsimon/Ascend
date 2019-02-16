@@ -1,17 +1,15 @@
 project "Engine"
-	kind "SharedLib"
+	kind "StaticLib"
 	language "C++"
-	files { "Source/**.*" }
+	files { "Engine.lua", "Include/**.*", "Source/**.*" }
 	objdir "Temp"
 	targetdir "Bin"
 	targetname "Ascend"
 
-	includedirs { (vulkan .. "/Include") }
+	includedirs { "%{wks.location}/External", (vulkan .. "/Include") }
 
 	libdirs { (vulkan .. "/Lib") }
 	links { "vulkan-1" }
-
-	defines { "ASC_BUILD_DLL" }
 
 	filter "system:windows"
 		cppdialect "c++17"

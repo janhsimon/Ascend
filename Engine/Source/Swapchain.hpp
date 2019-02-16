@@ -4,41 +4,41 @@
 
 namespace asc
 {
-	namespace internal
-	{
-		class Swapchain
-		{
-		private:
-			const Context* context;
-			vk::Format surfaceFormat;
-			vk::ColorSpaceKHR surfaceColorSpace;
-			vk::PresentModeKHR presentMode;
-			uint32_t imageCount;
-			vk::Extent2D extent;
-			std::vector<SwapchainImage> images;
+  namespace internal
+  {
+    class Swapchain
+    {
+    public:
+      Swapchain(const Context* context);
 
-			std::function<void(vk::SwapchainKHR*)> destroySwapchain;
-			std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)> swapchain;
+      void recordImageCommandBuffers(const vk::Pipeline* pipeline, const VertexBuffer* vertexBuffer);
 
-			std::function<void(vk::RenderPass*)> destroyRenderPass;
-			std::unique_ptr<vk::RenderPass, decltype(destroyRenderPass)> renderPass;
+      vk::Extent2D getExtent() const { return extent; }
+      vk::RenderPass* getRenderPass() const { return renderPass.get(); }
+      vk::SwapchainKHR* getSwapchain() const { return swapchain.get(); }
+      const SwapchainImage* getImage(uint32_t index) const { return &images.at(index); }
 
-			void selectSurfaceFormat();
-			void selectPresentMode();
-			void selectSwapExtent();
-			void createSwapchain();
-			void createRenderPass();
-			void createImages();
+    private:
+      const Context* context;
+      vk::Format surfaceFormat;
+      vk::ColorSpaceKHR surfaceColorSpace;
+      vk::PresentModeKHR presentMode;
+      uint32_t imageCount;
+      vk::Extent2D extent;
+      std::vector<SwapchainImage> images;
 
-		public:
-			Swapchain(const Context* _context);
+      std::function<void(vk::SwapchainKHR*)> destroySwapchain;
+      std::unique_ptr<vk::SwapchainKHR, decltype(destroySwapchain)> swapchain;
 
-			void recordImageCommandBuffers(const vk::Pipeline* pipeline);
+      std::function<void(vk::RenderPass*)> destroyRenderPass;
+      std::unique_ptr<vk::RenderPass, decltype(destroyRenderPass)> renderPass;
 
-			vk::Extent2D getExtent() const { return extent; }
-			vk::RenderPass* getRenderPass() const { return renderPass.get(); }
-			vk::SwapchainKHR* getSwapchain() const { return swapchain.get(); }
-			SwapchainImage *getImage(uint32_t index) { return &images.at(index); }
-		};
-	}
+      void selectSurfaceFormat();
+      void selectPresentMode();
+      void selectSwapExtent();
+      void createSwapchain();
+      void createRenderPass();
+      void createImages();
+    };
+  }
 }

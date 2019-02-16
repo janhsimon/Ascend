@@ -2,74 +2,79 @@
 
 namespace asc
 {
-	namespace internal
-	{
-		void SwapchainImage::createImageView()
-		{
-			auto imageViewCreateInfo = vk::ImageViewCreateInfo().setImage(image).setViewType(vk::ImageViewType::e2D).setFormat(swapchainSurfaceFormat);
-			imageViewCreateInfo.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
-			auto newImageView = new vk::ImageView(context->getDevice()->createImageView(imageViewCreateInfo));
+  namespace internal
+  {
+    SwapchainImage::SwapchainImage(const Context* context_, vk::Format swapchainSurfaceFormat_, vk::Extent2D swapchainExtent_, const vk::RenderPass* swapchainRenderPass_, const vk::Image& image_) :
+      context(context_),
+      swapchainSurfaceFormat(swapchainSurfaceFormat_), swapchainExtent(swapchainExtent_), swapchainRenderPass(swapchainRenderPass_),
+      image(image_)
+    {
+      createImageView();
+      createFramebuffer();
+      createCommandBuffer();
+    }
 
-			destroyImageView = [&](vk::ImageView* imageView)
-			{
-				if (context && context->getDevice())
-				{
-					context->getDevice()->destroyImageView(*imageView);
-				}
-			};
+    void SwapchainImage::recordCommandBuffer(const vk::Pipeline* pipeline, const VertexBuffer* vertexBuffer) const
+    {
+      const auto commandBufferBeginInfo = vk::CommandBufferBeginInfo().setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
+      commandBuffer.begin(commandBufferBeginInfo);
 
-			imageView = std::unique_ptr<vk::ImageView, decltype(destroyImageView)>(newImageView, destroyImageView);
-		}
+      const std::array<float, 4> clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+      const std::array<vk::ClearValue, 1> clearValues = { vk::ClearColorValue(clearColor) };
 
-		void SwapchainImage::createFramebuffer()
-		{
-			auto framebufferCreateInfo = vk::FramebufferCreateInfo().setRenderPass(*swapchainRenderPass).setWidth(swapchainExtent.width).setHeight(swapchainExtent.height);
-			framebufferCreateInfo.setAttachmentCount(1).setPAttachments(imageView.get()).setLayers(1);
-			auto newFramebuffer = new vk::Framebuffer(context->getDevice()->createFramebuffer(framebufferCreateInfo));
+      auto renderPassBeginInfo = vk::RenderPassBeginInfo().setRenderPass(*swapchainRenderPass);
+      renderPassBeginInfo.setClearValueCount(static_cast<uint32_t>(clearValues.size())).setPClearValues(clearValues.data());
+      renderPassBeginInfo.setRenderArea(vk::Rect2D(vk::Offset2D(), swapchainExtent)).setFramebuffer(*framebuffer.get());
+      commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
 
-			destroyFramebuffer = [&](vk::Framebuffer* framebuffer)
-			{
-				if (context && context->getDevice())
-				{
-					context->getDevice()->destroyFramebuffer(*framebuffer);
-				}
-			};
+      commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
 
-			framebuffer = std::unique_ptr<vk::Framebuffer, decltype(destroyFramebuffer)>(newFramebuffer, destroyFramebuffer);
-		}
+      commandBuffer.bindVertexBuffers(0, { *vertexBuffer->getBuffer() }, { 0 });
 
-		void SwapchainImage::createCommandBuffer()
-		{
-			const auto commandBufferAllocateInfo = vk::CommandBufferAllocateInfo().setCommandPool(*context->getCommandPool()).setCommandBufferCount(1);
-			commandBuffer = context->getDevice()->allocateCommandBuffers(commandBufferAllocateInfo).at(0);
-		}
+      commandBuffer.draw(static_cast<uint32_t>(vertexBuffer->getNumVertices()), 1, 0, 0);
 
-		SwapchainImage::SwapchainImage(const Context* _context, vk::Format _swapchainSurfaceFormat, vk::Extent2D _swapchainExtent, const vk::RenderPass* _swapchainRenderPass, const vk::Image& _image)
-			: context(_context), swapchainSurfaceFormat(_swapchainSurfaceFormat), swapchainExtent(_swapchainExtent), swapchainRenderPass(_swapchainRenderPass), image(_image)
-		{
-			createImageView();
-			createFramebuffer();
-			createCommandBuffer();
-		}
+      commandBuffer.endRenderPass();
+      commandBuffer.end();
+    }
 
-		void SwapchainImage::recordCommandBuffer(const vk::Pipeline* pipeline) const
-		{
-			const auto commandBufferBeginInfo = vk::CommandBufferBeginInfo().setFlags(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
-			commandBuffer.begin(commandBufferBeginInfo);
+    void SwapchainImage::createImageView()
+    {
+      auto imageViewCreateInfo = vk::ImageViewCreateInfo().setImage(image).setViewType(vk::ImageViewType::e2D).setFormat(swapchainSurfaceFormat);
+      imageViewCreateInfo.setSubresourceRange(vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+      auto newImageView = new vk::ImageView(context->getDevice()->createImageView(imageViewCreateInfo));
 
-			const std::array<float, 4> clearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-			const std::array<vk::ClearValue, 1> clearValues = { vk::ClearColorValue(clearColor) };
+      destroyImageView = [&](vk::ImageView* imageView)
+      {
+        if (context && context->getDevice())
+        {
+          context->getDevice()->destroyImageView(*imageView);
+        }
+      };
 
-			auto renderPassBeginInfo = vk::RenderPassBeginInfo().setRenderPass(*swapchainRenderPass);
-			renderPassBeginInfo.setClearValueCount(static_cast<uint32_t>(clearValues.size())).setPClearValues(clearValues.data());
-			renderPassBeginInfo.setRenderArea(vk::Rect2D(vk::Offset2D(), swapchainExtent)).setFramebuffer(*framebuffer.get());
-			commandBuffer.beginRenderPass(renderPassBeginInfo, vk::SubpassContents::eInline);
+      imageView = std::unique_ptr<vk::ImageView, decltype(destroyImageView)>(newImageView, destroyImageView);
+    }
 
-			commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
-			commandBuffer.draw(3, 1, 0, 0);
+    void SwapchainImage::createFramebuffer()
+    {
+      auto framebufferCreateInfo = vk::FramebufferCreateInfo().setRenderPass(*swapchainRenderPass).setWidth(swapchainExtent.width).setHeight(swapchainExtent.height);
+      framebufferCreateInfo.setAttachmentCount(1).setPAttachments(imageView.get()).setLayers(1);
+      auto newFramebuffer = new vk::Framebuffer(context->getDevice()->createFramebuffer(framebufferCreateInfo));
 
-			commandBuffer.endRenderPass();
-			commandBuffer.end();
-		}
-	}
+      destroyFramebuffer = [&](vk::Framebuffer* framebuffer)
+      {
+        if (context && context->getDevice())
+        {
+          context->getDevice()->destroyFramebuffer(*framebuffer);
+        }
+      };
+
+      framebuffer = std::unique_ptr<vk::Framebuffer, decltype(destroyFramebuffer)>(newFramebuffer, destroyFramebuffer);
+    }
+
+    void SwapchainImage::createCommandBuffer()
+    {
+      const auto commandBufferAllocateInfo = vk::CommandBufferAllocateInfo().setCommandPool(*context->getCommandPool()).setCommandBufferCount(1);
+      commandBuffer = context->getDevice()->allocateCommandBuffers(commandBufferAllocateInfo).at(0);
+    }
+  }
 }

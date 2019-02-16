@@ -5,203 +5,204 @@
 
 namespace asc
 {
-	namespace internal
-	{
-		static VKAPI_ATTR VkBool32 VKAPI_CALL vulkanLogCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
-		{
-			if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-			{
-				Log(callbackData->pMessage, LogSeverity::Error);
-			}
-			else if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
-			{
-				Log(callbackData->pMessage, LogSeverity::Warning);
-			}
-			else
-			{
-				Log(callbackData->pMessage);
-			}
-			
-			return VK_FALSE;
-		}
+  namespace internal
+  {
+    static VKAPI_ATTR VkBool32 VKAPI_CALL vulkanLogCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData)
+    {
+      if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+      {
+        Log(callbackData->pMessage, LogSeverity::Error);
+      }
+      else if (messageSeverity & VkDebugUtilsMessageSeverityFlagBitsEXT::VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+      {
+        Log(callbackData->pMessage, LogSeverity::Warning);
+      }
+      else
+      {
+        Log(callbackData->pMessage);
+      }
 
-		void Context::createDebugMessenger()
-		{
-			auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPfnUserCallback(vulkanLogCallback);
-			debugMessengerCreateInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
-			debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
-			
-			VkDebugUtilsMessengerEXT cStyleDebugMessenger;
-			const auto cStyleInstance = static_cast<VkInstance>(*instance);
-			const auto cStyleCreateInfo = static_cast<VkDebugUtilsMessengerCreateInfoEXT>(debugMessengerCreateInfo);
+      return VK_FALSE;
+    }
 
-			// extension functions must be called through a function pointer
-			const auto createDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(instance->getProcAddr(CREATE_DEBUG_MESSENGER_FUNCTION_NAME));
-			if (createDebugUtilsMessengerEXT(cStyleInstance, &cStyleCreateInfo, nullptr, &cStyleDebugMessenger) != VK_SUCCESS)
-			{
-				Log("Failed to create debug messenger.", LogSeverity::Error);
-			}
-			const auto newDebugMessenger = new vk::DebugUtilsMessengerEXT(cStyleDebugMessenger);
+    Context::Context(const vk::Instance* instance_, asc::ApplicationInfo* applicationInfo_) :
+      instance(instance_),
+      applicationInfo(applicationInfo_)
+    {
+      if (applicationInfo->debugMode)
+      {
+        createDebugMessenger();
+      }
 
-			destroyDebugMessenger = [&](vk::DebugUtilsMessengerEXT* messenger)
-			{
-				if (instance)
-				{
-					// extension functions must be called through a function pointer
-					auto destroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance->getProcAddr(DESTROY_DEBUG_MESSENGER_FUNCTION_NAME));
-					destroyDebugUtilsMessengerEXT(*instance, *messenger, nullptr);
-				}
-			};
+      createSurface();
+      selectPhysicalDevice();
+      selectQueueFamilyIndices();
+      createDevice();
+      retrieveQueues();
+      createCommandPool();
+    }
 
-			debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(newDebugMessenger, destroyDebugMessenger);
-		}
-		
-		void Context::createSurface()
-		{
-			const auto cStyleInstance = static_cast<VkInstance>(*instance);
-			const auto appSurface = reinterpret_cast<vk::SurfaceKHR*>(applicationInfo.createSurfaceLambda(&cStyleInstance));
+    void Context::createDebugMessenger()
+    {
+      auto debugMessengerCreateInfo = vk::DebugUtilsMessengerCreateInfoEXT().setPfnUserCallback(vulkanLogCallback);
+      debugMessengerCreateInfo.setMessageType(vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation);
+      debugMessengerCreateInfo.setMessageSeverity(vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning);
 
-			destroySurface = [&](vk::SurfaceKHR* surface)
-			{
-				if (instance)
-				{
-					instance->destroySurfaceKHR(*surface);
-				}
-			};
+      VkDebugUtilsMessengerEXT cStyleDebugMessenger;
+      const auto cStyleInstance = static_cast<VkInstance>(*instance);
+      const auto cStyleCreateInfo = static_cast<VkDebugUtilsMessengerCreateInfoEXT>(debugMessengerCreateInfo);
 
-			surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(appSurface, destroySurface);
-		}
+      // extension functions must be called through a function pointer
+      const auto createDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(instance->getProcAddr(CREATE_DEBUG_MESSENGER_FUNCTION_NAME));
+      if (createDebugUtilsMessengerEXT(cStyleInstance, &cStyleCreateInfo, nullptr, &cStyleDebugMessenger) != VK_SUCCESS)
+      {
+        Log("Failed to create debug messenger.", LogSeverity::Error);
+      }
+      const auto newDebugMessenger = new vk::DebugUtilsMessengerEXT(cStyleDebugMessenger);
 
-		void Context::selectPhysicalDevice()
-		{
-			const auto physicalDevices = instance->enumeratePhysicalDevices();
+      destroyDebugMessenger = [&](vk::DebugUtilsMessengerEXT* messenger)
+      {
+        if (instance)
+        {
+          // extension functions must be called through a function pointer
+          auto destroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(instance->getProcAddr(DESTROY_DEBUG_MESSENGER_FUNCTION_NAME));
+          destroyDebugUtilsMessengerEXT(*instance, *messenger, nullptr);
+        }
+      };
 
-			if (physicalDevices.empty())
-			{
-				Log("Failed to find suitable physical device.", LogSeverity::Fatal);
-			}
+      debugMessenger = std::unique_ptr<vk::DebugUtilsMessengerEXT, decltype(destroyDebugMessenger)>(newDebugMessenger, destroyDebugMessenger);
+    }
 
-			for (const auto& physicalDevice : physicalDevices)
-			{
-				// TODO: check that wanted device extensions are supported
-				// TODO: check that swapchain support is adequate
-				const auto properties = physicalDevice.getProperties();
-				if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
-				{
-					this->physicalDevice = physicalDevice;
-					return;
-				}
-			}
+    void Context::createSurface()
+    {
+      const auto cStyleInstance = static_cast<VkInstance>(*instance);
+      const auto appSurface = reinterpret_cast<vk::SurfaceKHR*>(applicationInfo->createSurfaceLambda(&cStyleInstance));
 
-			physicalDevice = *physicalDevices.begin();
-		}
+      destroySurface = [&](vk::SurfaceKHR* surface)
+      {
+        if (instance)
+        {
+          instance->destroySurfaceKHR(*surface);
+        }
+      };
 
-		void Context::selectQueueFamilyIndices()
-		{
-			std::optional<uint32_t> selectedGraphicsQueueFamilyIndex, selectedPresentQueueFamilyIndex;
+      surface = std::unique_ptr<vk::SurfaceKHR, decltype(destroySurface)>(appSurface, destroySurface);
+    }
 
-			const auto queueFamilies = physicalDevice.getQueueFamilyProperties();
-			for (uint32_t i = 0; i < queueFamilies.size(); ++i)
-			{
-				const auto queueFamily = queueFamilies[i];
+    void Context::selectPhysicalDevice()
+    {
+      const auto physicalDevices = instance->enumeratePhysicalDevices();
 
-				if (queueFamily.queueCount <= 0)
-				{
-					continue;
-				}
+      if (physicalDevices.empty())
+      {
+        Log("Failed to find suitable physical device.", LogSeverity::Fatal);
+      }
 
-				if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
-				{
-					selectedGraphicsQueueFamilyIndex = i;
-				}
+      for (const auto& physicalDevice : physicalDevices)
+      {
+        // TODO: check that wanted device extensions are supported
+        // TODO: check that swapchain support is adequate
+        const auto properties = physicalDevice.getProperties();
+        if (properties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
+        {
+          this->physicalDevice = physicalDevice;
+          return;
+        }
+      }
 
-				if (physicalDevice.getSurfaceSupportKHR(i, *surface))
-				{
-					selectedPresentQueueFamilyIndex = i;
-				}
+      physicalDevice = *physicalDevices.begin();
+    }
 
-				if (selectedGraphicsQueueFamilyIndex.has_value() && selectedPresentQueueFamilyIndex.has_value())
-				{
-					graphicsQueueFamilyIndex = selectedGraphicsQueueFamilyIndex.value();
-					presentQueueFamilyIndex = selectedPresentQueueFamilyIndex.value();
-					return;
-				}
-			}
+    void Context::selectQueueFamilyIndices()
+    {
+      std::optional<uint32_t> selectedGraphicsQueueFamilyIndex, selectedPresentQueueFamilyIndex;
 
-			Log("Physical device does not provide required queues.", LogSeverity::Fatal);
-		}
+      const auto queueFamilies = physicalDevice.getQueueFamilyProperties();
+      for (uint32_t i = 0; i < queueFamilies.size(); ++i)
+      {
+        const auto queueFamily = queueFamilies[i];
 
-		void Context::createDevice()
-		{
-			const auto deviceFeatures = vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true);
-			const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+        if (queueFamily.queueCount <= 0)
+        {
+          continue;
+        }
 
-			std::vector<vk::DeviceQueueCreateInfo> deviceQueueCreateInfos;
+        if (queueFamily.queueFlags & vk::QueueFlagBits::eGraphics)
+        {
+          selectedGraphicsQueueFamilyIndex = i;
+        }
 
-			constexpr float QUEUE_PRIORITY = 1.0f;
-			auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
-			deviceQueueCreateInfo.setQueueCount(1).setPQueuePriorities(&QUEUE_PRIORITY);
-			deviceQueueCreateInfos.emplace_back(deviceQueueCreateInfo);
+        if (physicalDevice.getSurfaceSupportKHR(i, *surface))
+        {
+          selectedPresentQueueFamilyIndex = i;
+        }
 
-			if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
-			{
-				deviceQueueCreateInfo.setQueueFamilyIndex(presentQueueFamilyIndex);
-				deviceQueueCreateInfos.emplace_back(deviceQueueCreateInfo);
-			}
+        if (selectedGraphicsQueueFamilyIndex.has_value() && selectedPresentQueueFamilyIndex.has_value())
+        {
+          graphicsQueueFamilyIndex = selectedGraphicsQueueFamilyIndex.value();
+          presentQueueFamilyIndex = selectedPresentQueueFamilyIndex.value();
+          return;
+        }
+      }
 
-			auto deviceCreateInfo = vk::DeviceCreateInfo().setPEnabledFeatures(&deviceFeatures);
-			deviceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(deviceExtensions.size())).setPpEnabledExtensionNames(deviceExtensions.data());
-			deviceCreateInfo.setQueueCreateInfoCount(static_cast<uint32_t>(deviceQueueCreateInfos.size())).setPQueueCreateInfos(deviceQueueCreateInfos.data());
-			
-			const auto newDevice = new vk::Device(physicalDevice.createDevice(deviceCreateInfo));
+      Log("Physical device does not provide required queues.", LogSeverity::Fatal);
+    }
 
-			destroyDevice = [](vk::Device* device)
-			{
-				if (device)
-				{
-					device->destroy();
-				}
-			};
+    void Context::createDevice()
+    {
+      const auto deviceFeatures = vk::PhysicalDeviceFeatures().setSamplerAnisotropy(true);
+      const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-			device = std::unique_ptr<vk::Device, decltype(destroyDevice)>(newDevice, destroyDevice);
-		}
+      std::vector<vk::DeviceQueueCreateInfo> deviceQueueCreateInfos;
 
-		void Context::retrieveQueues()
-		{
-			graphicsQueue = device->getQueue(graphicsQueueFamilyIndex, 0);
-			presentQueue = device->getQueue(presentQueueFamilyIndex, 0);
-		}
+      constexpr float QUEUE_PRIORITY = 1.0f;
+      auto deviceQueueCreateInfo = vk::DeviceQueueCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
+      deviceQueueCreateInfo.setQueueCount(1).setPQueuePriorities(&QUEUE_PRIORITY);
+      deviceQueueCreateInfos.emplace_back(deviceQueueCreateInfo);
 
-		void Context::createCommandPool()
-		{
-			auto commandPoolCreateInfo = vk::CommandPoolCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
-			auto newCommandPool = new vk::CommandPool(device->createCommandPool(commandPoolCreateInfo));
-			
-			destroyCommandPool = [&](vk::CommandPool* commandPool)
-			{
-				if (device)
-				{
-					device->destroyCommandPool(*commandPool);
-				}
-			};
-			
-			commandPool = std::unique_ptr<vk::CommandPool, decltype(destroyCommandPool)>(newCommandPool, destroyCommandPool);
-		}
+      if (graphicsQueueFamilyIndex != presentQueueFamilyIndex)
+      {
+        deviceQueueCreateInfo.setQueueFamilyIndex(presentQueueFamilyIndex);
+        deviceQueueCreateInfos.emplace_back(deviceQueueCreateInfo);
+      }
 
-		Context::Context(const vk::Instance* _instance, asc::ApplicationInfo& _applicationInfo)
-			: instance(_instance), applicationInfo(_applicationInfo)
-		{
-			if (applicationInfo.debugMode)
-			{
-				createDebugMessenger();
-			}
+      auto deviceCreateInfo = vk::DeviceCreateInfo().setPEnabledFeatures(&deviceFeatures);
+      deviceCreateInfo.setEnabledExtensionCount(static_cast<uint32_t>(deviceExtensions.size())).setPpEnabledExtensionNames(deviceExtensions.data());
+      deviceCreateInfo.setQueueCreateInfoCount(static_cast<uint32_t>(deviceQueueCreateInfos.size())).setPQueueCreateInfos(deviceQueueCreateInfos.data());
 
-			createSurface();
-			selectPhysicalDevice();
-			selectQueueFamilyIndices();
-			createDevice();
-			retrieveQueues();
-			createCommandPool();
-		}
-	}
+      const auto newDevice = new vk::Device(physicalDevice.createDevice(deviceCreateInfo));
+
+      destroyDevice = [](vk::Device* device)
+      {
+        if (device)
+        {
+          device->destroy();
+        }
+      };
+
+      device = std::unique_ptr<vk::Device, decltype(destroyDevice)>(newDevice, destroyDevice);
+    }
+
+    void Context::retrieveQueues()
+    {
+      graphicsQueue = device->getQueue(graphicsQueueFamilyIndex, 0);
+      presentQueue = device->getQueue(presentQueueFamilyIndex, 0);
+    }
+
+    void Context::createCommandPool()
+    {
+      auto commandPoolCreateInfo = vk::CommandPoolCreateInfo().setQueueFamilyIndex(graphicsQueueFamilyIndex);
+      auto newCommandPool = new vk::CommandPool(device->createCommandPool(commandPoolCreateInfo));
+
+      destroyCommandPool = [&](vk::CommandPool* commandPool)
+      {
+        if (device)
+        {
+          device->destroyCommandPool(*commandPool);
+        }
+      };
+
+      commandPool = std::unique_ptr<vk::CommandPool, decltype(destroyCommandPool)>(newCommandPool, destroyCommandPool);
+    }
+  }
 }

@@ -4,23 +4,23 @@
 
 namespace asc
 {
-	namespace internal
-	{
-		class Shader
-		{
-		private:
-			static constexpr char SHADER_PROGRAM_ENTRY_POINT[] = "main";
+  namespace internal
+  {
+    class Shader
+    {
+    public:
+      Shader(const vk::Device* device, const std::string& filename, vk::ShaderStageFlagBits shaderStageFlags);
 
-			const vk::Device* device;
-			vk::ShaderStageFlagBits shaderStageFlags;
+      vk::PipelineShaderStageCreateInfo getPipelineShaderStageCreateInfo() const;
 
-			std::function<void(vk::ShaderModule*)> destroyShaderModule;
-			std::unique_ptr<vk::ShaderModule, decltype(destroyShaderModule)> shaderModule;
+    private:
+      static constexpr char SHADER_PROGRAM_ENTRY_POINT[] = "main";
 
-		public:
-			Shader(const vk::Device* _device, const std::string& filename, vk::ShaderStageFlagBits _shaderStageFlags);
+      const vk::Device* device;
+      vk::ShaderStageFlagBits shaderStageFlags;
 
-			vk::PipelineShaderStageCreateInfo getPipelineShaderStageCreateInfo() const;
-		};
-	}
+      std::function<void(vk::ShaderModule*)> destroyShaderModule;
+      std::unique_ptr<vk::ShaderModule, decltype(destroyShaderModule)> shaderModule;
+    };
+  }
 }

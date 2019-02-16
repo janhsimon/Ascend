@@ -1,64 +1,26 @@
 #pragma once
 
-#include "Export.hpp"
-
-#include <functional>
-#include <vulkan/vulkan.hpp>
+#include "ApplicationInfo.hpp"
 
 namespace asc
 {
-	struct ApplicationInfo
-	{
-		const char* name = "My Ascend Application";
-		uint32_t versionMajor = 1, versionMinor = 0, versionPatch = 0;
-		std::vector<const char*> instanceExtensions = {};
-		bool debugMode = false;
-		std::function<VkSurfaceKHR*(const VkInstance*)> createSurfaceLambda = nullptr;
+  class Application
+  {
+  public:
+    Application(const ApplicationInfo& applicationInfo);
 
-		ApplicationInfo& setName(const char* name)
-		{
-			this->name = name;
-			return *this;
-		}
+    ApplicationInfo* getApplicationInfo() const { return applicationInfo.get(); }
+    VkInstance* getInstance() const { return reinterpret_cast<VkInstance*>(instance.get()); }
 
-		ApplicationInfo& setVersion(const uint32_t versionMajor, const uint32_t versionMinor, const uint32_t versionPatch)
-		{
-			this->versionMajor = versionMajor;
-			this->versionMinor = versionMinor;
-			this->versionPatch = versionPatch;
-			return *this;
-		}
+  private:
+    static constexpr uint32_t API_VERSION = VK_API_VERSION_1_0;
+    static constexpr char ENGINE_NAME[] = "Ascend";
+    static constexpr uint32_t ENGINE_VERSION = VK_MAKE_VERSION(1, 0, 0);
+    static constexpr char STANDARD_VALIDATION_LAYER_NAME[] = "VK_LAYER_LUNARG_standard_validation";
 
-		ApplicationInfo& setInstanceExtensions(const std::vector<const char*> &instanceExtensions)
-		{
-			this->instanceExtensions = instanceExtensions;
-			return *this;
-		}
+    std::unique_ptr<ApplicationInfo> applicationInfo;
 
-		ApplicationInfo& setDebugMode(const bool debugMode)
-		{
-			this->debugMode = debugMode;
-			return *this;
-		}
-	};
-
-	class ASC_EXPORT Application
-	{
-	private:
-		static constexpr uint32_t API_VERSION = VK_API_VERSION_1_0;
-		static constexpr char ENGINE_NAME[] = "Ascend";
-		static constexpr uint32_t ENGINE_VERSION = VK_MAKE_VERSION(1, 0, 0);
-		static constexpr char STANDARD_VALIDATION_LAYER_NAME[] = "VK_LAYER_LUNARG_standard_validation";
-
-		const ApplicationInfo applicationInfo;
-
-		std::function<void(vk::Instance*)> destroyInstance;
-		std::unique_ptr<vk::Instance, decltype(destroyInstance)> instance;
-
-	public:
-		Application(const ApplicationInfo& _applicationInfo);
-
-		ApplicationInfo getApplicationInfo() const { return applicationInfo; }
-		VkInstance* getInstance() const { return reinterpret_cast<VkInstance*>(instance.get()); }
-	};
+    std::function<void(vk::Instance*)> destroyInstance;
+    std::unique_ptr<vk::Instance, decltype(destroyInstance)> instance;
+  };
 }
