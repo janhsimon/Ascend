@@ -23,6 +23,8 @@ project "QtSandbox"
     ("{COPY} " .. qt .. "/bin/Qt5Widgets.dll Bin/")
   }
 
+  require "External/premake-qt/qt"
+
   premake.extensions.qt.enable()
   qtpath(qt)
   qtmodules { "core", "gui", "widgets" }
@@ -38,7 +40,7 @@ project "QtSandbox"
     symbols "On"
 
   filter "configurations:Release"
-    "DEBUG"
+    defines "DEBUG"
     optimize "On"
 
   filter { "files:Source/Shaders/*", "configurations:Debug" }
