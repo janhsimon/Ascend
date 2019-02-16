@@ -1,3 +1,8 @@
+# Root folder
+*.*
+!.git*
+!Generate.lua
+
 # Engine project
 Engine/*.*
 !Engine/Engine.lua
@@ -15,7 +20,3 @@ SDLSandbox/*.*
 !SDLSandbox/SDLSandbox.lua
 SDLSandbox/Bin
 SDLSandbox/Temp
-
-# Visual Studio
-.vs/
-*.sln
